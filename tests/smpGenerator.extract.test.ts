@@ -35,22 +35,26 @@ jest.mock('sqlite3', () => {
 });
 
 // Mock dependencies
-jest.mock('node:fs', () => ({
-  promises: {
-    mkdir: jest.fn().mockResolvedValue(undefined),
-  },
-  createWriteStream: jest.fn().mockReturnValue({
-    on: jest.fn().mockImplementation(function (this: any) {
-      return this;
+jest.mock('node:fs', () => {
+  const mockOn = jest.fn().mockImplementation(function (this: any) {
+    return this;
+  });
+
+  return {
+    promises: {
+      mkdir: jest.fn().mockResolvedValue(undefined),
+    },
+    createWriteStream: jest.fn().mockReturnValue({
+      on: mockOn,
     }),
-  }),
-  existsSync: jest.fn().mockReturnValue(true),
-}));
+    existsSync: jest.fn().mockReturnValue(true),
+  };
+});
 
 // Mock yauzl
 jest.mock('yauzl', () => {
   const mockReadStream = {
-    on: jest.fn().mockImplementation(function (event, handler) {
+    on: jest.fn(function (this: any, event, handler) {
       if (event === 'end') {
         setTimeout(handler, 10);
       }
@@ -59,26 +63,26 @@ jest.mock('yauzl', () => {
     pipe: jest.fn(),
   };
 
+  const mockZipFile = {
+    on: jest.fn(function (this: any, event, handler) {
+      if (event === 'entry') {
+        // Simulate a few entries
+        handler({ fileName: 'style.json' });
+        handler({ fileName: 'mbtiles-source/0/0/0.png' });
+      }
+      if (event === 'end') {
+        setTimeout(handler, 10);
+      }
+      return this;
+    }),
+    readEntry: jest.fn(),
+    openReadStream: jest.fn((entry, streamCallback) => {
+      streamCallback(null, mockReadStream);
+    }),
+  };
+
   return {
     open: jest.fn((zipPath, options, callback) => {
-      const mockZipFile = {
-        on: jest.fn().mockImplementation(function (event, handler) {
-          if (event === 'entry') {
-            // Simulate a few entries
-            handler({ fileName: 'style.json' });
-            handler({ fileName: 'mbtiles-source/0/0/0.png' });
-          }
-          if (event === 'end') {
-            setTimeout(handler, 10);
-          }
-          return this;
-        }),
-        readEntry: jest.fn(),
-        openReadStream: jest.fn((entry, streamCallback) => {
-          streamCallback(null, mockReadStream);
-        }),
-      };
-
       callback(null, mockZipFile);
     }),
   };

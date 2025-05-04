@@ -1,17 +1,25 @@
 // Mock dependencies before importing the module
-jest.mock('fs', () => ({
-  writeFileSync: jest.fn(),
-  existsSync: jest.fn().mockReturnValue(true),
-  createWriteStream: jest.fn().mockReturnValue({
-    end: jest.fn(),
-    on: jest.fn().mockImplementation((event, callback) => {
-      if (event === 'close') {
-        setTimeout(callback, 10);
-      }
-      return this;
+jest.mock('fs', () => {
+  const mockOn = jest.fn().mockImplementation(function (
+    this: any,
+    event,
+    callback,
+  ) {
+    if (event === 'close') {
+      setTimeout(callback, 10);
+    }
+    return this;
+  });
+
+  return {
+    writeFileSync: jest.fn(),
+    existsSync: jest.fn().mockReturnValue(true),
+    createWriteStream: jest.fn().mockReturnValue({
+      end: jest.fn(),
+      on: mockOn,
     }),
-  }),
-}));
+  };
+});
 
 jest.mock('fs-extra', () => ({
   ensureDirSync: jest.fn(),
@@ -62,37 +70,41 @@ jest.mock(
   { virtual: true },
 );
 
-jest.mock('yauzl', () => ({
-  open: jest.fn((zipPath, options, callback) => {
-    const mockZipFile = {
-      on: jest.fn((event, handler) => {
-        if (event === 'entry') {
-          // Simulate a few entries
-          handler({ fileName: 'style.json' });
-          handler({ fileName: 's/0/0/0.png' });
-        }
-        if (event === 'end') {
-          setTimeout(handler, 10);
-        }
-        return mockZipFile;
-      }),
-      readEntry: jest.fn(),
-      openReadStream: jest.fn((entry, streamCallback) => {
-        const mockReadStream = {
-          on: jest.fn((event, handler) => {
-            if (event === 'end') {
-              setTimeout(handler, 10);
-            }
-            return mockReadStream;
-          }),
-          pipe: jest.fn(),
-        };
-        streamCallback(null, mockReadStream);
-      }),
-    };
-    callback(null, mockZipFile);
-  }),
-}));
+jest.mock('yauzl', () => {
+  const mockReadStream = {
+    on: jest.fn(function (this: any, event, handler) {
+      if (event === 'end') {
+        setTimeout(handler, 10);
+      }
+      return this;
+    }),
+    pipe: jest.fn(),
+  };
+
+  const mockZipFile = {
+    on: jest.fn(function (this: any, event, handler) {
+      if (event === 'entry') {
+        // Simulate a few entries
+        handler({ fileName: 'style.json' });
+        handler({ fileName: 's/0/0/0.png' });
+      }
+      if (event === 'end') {
+        setTimeout(handler, 10);
+      }
+      return this;
+    }),
+    readEntry: jest.fn(),
+    openReadStream: jest.fn((entry, streamCallback) => {
+      streamCallback(null, mockReadStream);
+    }),
+  };
+
+  return {
+    open: jest.fn((zipPath, options, callback) => {
+      callback(null, mockZipFile);
+    }),
+  };
+});
 
 // Simplified extractZip function for testing
 async function extractZip(zipPath: string, outputDir: string): Promise<void> {
@@ -303,7 +315,8 @@ describe('fromMbtiles', () => {
   it('should handle errors during conversion', async () => {
     // Mock MBTiles to throw an error
     const mbtilesReader = await import('mbtiles-reader');
-    mbtilesReader.MBTiles.mockImplementationOnce(() => {
+    const mockMBTiles = mbtilesReader.MBTiles as jest.Mock;
+    mockMBTiles.mockImplementationOnce(() => {
       throw new Error('Conversion failed');
     });
 

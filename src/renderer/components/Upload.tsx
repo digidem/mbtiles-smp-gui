@@ -3,30 +3,38 @@ import { useDropzone } from 'react-dropzone';
 
 function SingleFileUploadForm() {
   const [uploading, setUploading] = useState<boolean>(false);
-  const [results, setResults] = useState<string | null>(null);
-  const [failed, setFailed] = useState<boolean>(null);
+  const [results, setResults] = useState<any | null>(null);
+  const [failed, setFailed] = useState<any | null>(null);
   const [processing, setProcessing] = useState<boolean>(false);
   // const [tab, setTab] = useState('mobile');
-  const handleUpload = async (file) => {
+
+  const handleUpload = useCallback(async (file: File) => {
     if (!file) return;
     setUploading(true);
     const filePath = file.path || file.webkitRelativePath || file.name; // Ensure compatibility
-    window.electron.ipcRenderer.sendMessage('upload-file', filePath);
-  };
-
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length) {
-      const file = acceptedFiles[0];
-      /** File validation */
-      if (window.innerWidth > 768) {
-        if (!file.name.endsWith('.mbtiles')) {
-          alert('Please select a valid .mbtiles file');
-          return;
-        }
-      }
-      handleUpload(file);
-    }
+    window.electron.ipcRenderer.sendMessage(
+      'ipc-example',
+      'upload-file',
+      filePath,
+    );
   }, []);
+
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      if (acceptedFiles.length) {
+        const file = acceptedFiles[0];
+        /** File validation */
+        if (window.innerWidth > 768) {
+          if (!file.name.endsWith('.mbtiles')) {
+            alert('Please select a valid .mbtiles file');
+            return;
+          }
+        }
+        handleUpload(file);
+      }
+    },
+    [handleUpload],
+  );
 
   useEffect(() => {
     const handleResponse = (result: any) => {
@@ -46,14 +54,16 @@ function SingleFileUploadForm() {
       }
     };
     console.log('Setting up IPC listeners');
-    window.electron.ipcRenderer.on('upload-file-response', handleResponse);
+    const removeListener = window.electron.ipcRenderer.on(
+      'ipc-example',
+      handleResponse,
+    );
 
     return () => {
       console.log('Removing IPC listeners');
-      window.electron.ipcRenderer.removeListener(
-        'upload-file-response',
-        handleResponse,
-      );
+      if (removeListener) {
+        removeListener();
+      }
     };
   }, []);
   const { getRootProps, getInputProps } = useDropzone({
@@ -74,20 +84,20 @@ function SingleFileUploadForm() {
           {(() => {
             if (uploading) return 'Uploading';
             if (processing) return 'Processing';
-            if (results?.downloadUrl) return 'Ready to Download';
+            if (results && 'downloadUrl' in results) return 'Ready to Download';
             if (failed) return 'Failed';
             return 'Idle';
           })()}
         </span>
       </div>
       <div>
-        {results?.downloadUrl && (
+        {results && 'downloadUrl' in results && (
           <div className="mt-4 flex flex-col items-center space-y-8">
             <button
               type="button"
               onClick={() => {
                 const link = document.createElement('a');
-                link.href = results?.downloadUrl;
+                link.href = results.downloadUrl as string;
                 link.download = '';
                 document.body.appendChild(link);
                 link.click();
@@ -144,7 +154,20 @@ function SingleFileUploadForm() {
         {failed && (
           <div className="my-4 text-center">
             <span className="bg-red-500 text-white rounded-full px-4 py-2 uppercase">
-              <b>Error:</b> {failed.message || failed || 'Error'}
+              <b>Error:</b>{' '}
+              {(() => {
+                if (
+                  typeof failed === 'object' &&
+                  failed !== null &&
+                  'message' in failed
+                ) {
+                  return failed.message;
+                }
+                if (typeof failed === 'string') {
+                  return failed;
+                }
+                return 'Error';
+              })()}
             </span>
           </div>
         )}
@@ -178,7 +201,7 @@ function SingleFileUploadForm() {
           </div>
         )}
       </div>
-      {!results?.downloadUrl && !processing && (
+      {!(results && 'downloadUrl' in results) && !processing && (
         <div
           {...getRootProps()}
           className="w-full p-3 py-36 border border-gray-500 border-dashed"

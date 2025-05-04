@@ -1,0 +1,22 @@
+{
+  "name": "mbtiles-smp-gui",
+  "version": "1.0.0",
+  "description": "A GUI for converting MBTiles to SMP",
+  "license": "MIT",
+  "type": "commonjs",
+  "author": {
+    "name": "Luandro",
+    "email": "luandro@digital-democracy.org",
+    "url": "https://github.com/digidem/mbtiles-smp-gui"
+  },
+  "main": "./dist/main/main.js",
+  "scripts": {
+    "rebuild": "node -r ts-node/register ../../.erb/scripts/electron-rebuild.js",
+    "postinstall": "npm run rebuild && npm run link-modules",
+    "link-modules": "node -r ts-node/register ../../.erb/scripts/link-modules.ts"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "unzipper": "^0.11.6"
+  }
+}

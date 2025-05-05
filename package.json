@@ -72,7 +72,8 @@
       "\\.(css|less|sass|scss)$": "identity-obj-proxy"
     },
     "setupFiles": [
-      "./.erb/scripts/check-build-exists.ts"
+      "./.erb/scripts/check-build-exists.ts",
+      "./.erb/scripts/jest-setup.js"
     ],
     "testEnvironment": "jsdom",
     "testEnvironmentOptions": {
@@ -84,7 +85,10 @@
     ],
     "transform": {
       "\\.(ts|tsx|js|jsx)$": "ts-jest"
-    }
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!chalk|ansi-styles|strip-ansi|ansi-regex|#ansi-styles|#supports-color)"
+    ]
   },
   "dependencies": {
     "archiver": "^7.0.1",
@@ -104,7 +108,6 @@
     "@electron/notarize": "^2.5.0",
     "@electron/rebuild": "^3.7.2",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.6.0",
-    "@types/yauzl": "^2.10.3",
     "@svgr/webpack": "^8.1.0",
     "@teamsupercell/typings-for-css-modules-loader": "^2.5.2",
     "@testing-library/jest-dom": "^6.6.3",
@@ -118,11 +121,12 @@
     "@types/sqlite3": "^3.1.11",
     "@types/terser-webpack-plugin": "^5.2.0",
     "@types/webpack-bundle-analyzer": "^4.7.0",
+    "@types/yauzl": "^2.10.3",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "autoprefixer": "^10.4.21",
     "browserslist-config-erb": "^0.0.3",
-    "chalk": "^5.4.1",
+    "chalk": "^4.1.2",
     "concurrently": "^9.1.2",
     "core-js": "^3.42.0",
     "cross-env": "^7.0.3",
@@ -159,7 +163,7 @@
     "react-refresh": "^0.17.0",
     "react-test-renderer": "^19.1.0",
     "rimraf": "^6.0.1",
-    "sass": "^1.77.4",
+    "sass": "^1.87.0",
     "sass-loader": "^14.2.1",
     "style-loader": "^4.0.0",
     "tailwindcss": "^3.4.4",

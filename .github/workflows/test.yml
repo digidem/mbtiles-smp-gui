@@ -18,7 +18,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 18
           cache: 'npm'
 
       - name: Set up Python
@@ -51,6 +51,8 @@ jobs:
           echo "npm_config_target=26.6.10" >> $GITHUB_ENV
           echo "npm_config_runtime=electron" >> $GITHUB_ENV
           echo "npm_config_disturl=https://electronjs.org/headers" >> $GITHUB_ENV
+          echo "npm_config_target_arch=arm64" >> $GITHUB_ENV
+          echo "npm_config_arch=arm64" >> $GITHUB_ENV
           brew install sqlite
 
       - name: Install dependencies
@@ -67,11 +69,12 @@ jobs:
           npx electron-rebuild -f -w sqlite3 -v 26.6.10
           cd ../..
 
-      - name: Skip sqlite3 for macOS
+      - name: Rebuild native modules for macOS
         if: runner.os == 'macOS'
         run: |
           cd release/app
-          npm uninstall sqlite3
+          npm install --no-save @electron/rebuild
+          npx @electron/rebuild --force --types prod,dev,optional --module-dir . --only sqlite3 --version 26.6.10
           cd ../..
 
       - name: Run tests

@@ -3,6 +3,9 @@ import chalk from 'chalk';
 import { execSync } from 'child_process';
 import { dependencies } from '../../package.json';
 
+// Check if --force flag is passed
+const forceFlag = process.argv.includes('--force');
+
 if (dependencies) {
   const dependenciesKeys = Object.keys(dependencies);
   const nativeDeps = fs
@@ -46,7 +49,17 @@ ${chalk.bold(
   'https://electron-react-boilerplate.js.org/docs/adding-dependencies/#module-structure',
 )}
  `);
-      process.exit(1);
+
+      // Only exit with error if --force flag is not provided
+      if (!forceFlag) {
+        process.exit(1);
+      } else {
+        console.log(
+          chalk.yellow(
+            'Continuing despite native dependencies (--force flag used)',
+          ),
+        );
+      }
     }
   } catch (e) {
     console.log('Native dependencies could not be checked');

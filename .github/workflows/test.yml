@@ -55,16 +55,7 @@ jobs:
           # Print system information for debugging
           uname -a
           arch
-          echo "npm_config_build_from_source=true" >> $GITHUB_ENV
-          echo "npm_config_sqlite_libname=sqlite3" >> $GITHUB_ENV
-          echo "npm_config_sqlite_libpath=$(brew --prefix)/opt/sqlite/lib" >> $GITHUB_ENV
-          echo "npm_config_sqlite_include_dir=$(brew --prefix)/opt/sqlite/include" >> $GITHUB_ENV
-          echo "npm_config_target=26.6.10" >> $GITHUB_ENV
-          echo "npm_config_runtime=electron" >> $GITHUB_ENV
-          echo "npm_config_disturl=https://electronjs.org/headers" >> $GITHUB_ENV
-          # Use x64 architecture for GitHub Actions macOS runners
-          echo "npm_config_target_arch=x64" >> $GITHUB_ENV
-          echo "npm_config_arch=x64" >> $GITHUB_ENV
+          # Install sqlite3 system dependency
           brew install sqlite
 
       - name: Install dependencies
@@ -87,12 +78,19 @@ jobs:
           cd release/app
           # Remove existing sqlite3
           npm uninstall sqlite3
-          # Install sqlite3 with specific flags for Electron
-          npm install sqlite3@5.1.7 --build-from-source --runtime=electron --target=26.6.10 --dist-url=https://electronjs.org/headers
+
+          # Install sqlite3 with the suggested approach
+          npm install sqlite3 --build-from-source --target_arch=arm64 --fallback-to-build
+
           # Check the installed packages
           npm list sqlite3
+
           # Check the binary module
           find node_modules/sqlite3 -name "*.node"
+
+          # Print architecture of the binary
+          file $(find node_modules/sqlite3 -name "*.node")
+
           cd ../..
 
       - name: Run tests

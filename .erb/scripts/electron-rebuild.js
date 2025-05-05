@@ -26,10 +26,10 @@ if (
       console.error('Error uninstalling sqlite3:', error);
     }
 
-    // Then install it with the correct flags
+    // Then install it with the suggested approach
     try {
       execSync(
-        'npm install sqlite3@5.1.7 --build-from-source --runtime=electron --target=26.6.10 --dist-url=https://electronjs.org/headers',
+        'npm install sqlite3 --build-from-source --target_arch=arm64 --fallback-to-build',
         {
           cwd: webpackPaths.appPath,
           stdio: 'inherit',

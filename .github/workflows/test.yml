@@ -42,6 +42,8 @@ jobs:
           python -m pip install setuptools
           python -m pip install wheel
           npm install -g node-gyp@9.4.0
+          npm uninstall -S sqlite3
+
 
       - name: Install system dependencies
         if: runner.os == 'Linux'
@@ -61,6 +63,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
+          npm install sqlite3 --build-from-source --target_arch=arm64 --fallback-to-build
           cd release/app
           npm install --ignore-scripts
           cd ../..

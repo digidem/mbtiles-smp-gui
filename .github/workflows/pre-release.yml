@@ -20,6 +20,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Set up Python
         if: runner.os == 'macOS'
@@ -34,8 +35,18 @@ jobs:
           python -m pip install setuptools
           python -m pip install wheel
 
+      - name: Install system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 make g++ build-essential libsqlite3-dev
+
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install
+          cd release/app
+          npm install
+          cd ../..
 
       - name: Build Electron app for macOS
         if: matrix.os == 'macos-latest'
@@ -70,9 +81,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm install
+
       - name: Generate changelog
         run: npx auto-changelog -p
 
@@ -96,9 +109,6 @@ jobs:
 
       - name: List downloaded files
         run: ls -R ./release/build
-
-      - name: Generate changelog
-        run: npx auto-changelog -p
 
       - name: Create GitHub Pre-Release
         id: create_pre_release

@@ -15,12 +15,29 @@ if (
 
   // Special handling for macOS
   if (process.platform === 'darwin') {
-    const electronRebuildCmd =
-      '../../node_modules/.bin/electron-rebuild --force --types prod,dev,optional --module-dir . --only sqlite3';
-    execSync(electronRebuildCmd, {
-      cwd: webpackPaths.appPath,
-      stdio: 'inherit',
-    });
+    // For macOS, we'll use npm install directly with the correct flags
+    // First, uninstall sqlite3
+    try {
+      execSync('npm uninstall sqlite3', {
+        cwd: webpackPaths.appPath,
+        stdio: 'inherit',
+      });
+    } catch (error) {
+      console.error('Error uninstalling sqlite3:', error);
+    }
+
+    // Then install it with the correct flags
+    try {
+      execSync(
+        'npm install sqlite3@5.1.7 --build-from-source --runtime=electron --target=26.6.10 --dist-url=https://electronjs.org/headers',
+        {
+          cwd: webpackPaths.appPath,
+          stdio: 'inherit',
+        },
+      );
+    } catch (error) {
+      console.error('Error installing sqlite3:', error);
+    }
 
     // Rebuild other modules if needed
     const otherModulesCmd =

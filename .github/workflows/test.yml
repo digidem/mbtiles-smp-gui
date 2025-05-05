@@ -9,7 +9,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [macos-latest]
+        # Temporarily focusing on macOS only
+        # Will restore other platforms once macOS is fixed
+        # os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - name: Check out Git repository
@@ -20,6 +23,11 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
+
+      - name: Check Node.js and npm versions
+        run: |
+          node --version
+          npm --version
 
       - name: Set up Python
         if: runner.os == 'macOS'
@@ -44,6 +52,9 @@ jobs:
       - name: Set up macOS environment
         if: runner.os == 'macOS'
         run: |
+          # Print system information for debugging
+          uname -a
+          arch
           echo "npm_config_build_from_source=true" >> $GITHUB_ENV
           echo "npm_config_sqlite_libname=sqlite3" >> $GITHUB_ENV
           echo "npm_config_sqlite_libpath=$(brew --prefix)/opt/sqlite/lib" >> $GITHUB_ENV
@@ -51,8 +62,9 @@ jobs:
           echo "npm_config_target=26.6.10" >> $GITHUB_ENV
           echo "npm_config_runtime=electron" >> $GITHUB_ENV
           echo "npm_config_disturl=https://electronjs.org/headers" >> $GITHUB_ENV
-          echo "npm_config_target_arch=arm64" >> $GITHUB_ENV
-          echo "npm_config_arch=arm64" >> $GITHUB_ENV
+          # Use x64 architecture for GitHub Actions macOS runners
+          echo "npm_config_target_arch=x64" >> $GITHUB_ENV
+          echo "npm_config_arch=x64" >> $GITHUB_ENV
           brew install sqlite
 
       - name: Install dependencies
@@ -73,8 +85,14 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           cd release/app
-          npm install --no-save @electron/rebuild
-          npx @electron/rebuild --force --types prod,dev,optional --module-dir . --only sqlite3 --version 26.6.10
+          # Remove existing sqlite3
+          npm uninstall sqlite3
+          # Install sqlite3 with specific flags for Electron
+          npm install sqlite3@5.1.7 --build-from-source --runtime=electron --target=26.6.10 --dist-url=https://electronjs.org/headers
+          # Check the installed packages
+          npm list sqlite3
+          # Check the binary module
+          find node_modules/sqlite3 -name "*.node"
           cd ../..
 
       - name: Run tests

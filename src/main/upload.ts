@@ -21,7 +21,6 @@ const handleUploadFile = async (
     console.log('No file path received.');
     return { canceled: true, error: { message: 'No file path received.' } };
   }
-  event.reply('upload-file-response', { uploaded: true });
   try {
     // Create a unique hash for the temporary folder
     const hash = crypto
@@ -72,8 +71,24 @@ const handleUploadFile = async (
 };
 
 ipcMain.on('upload-file', async (event, filePath) => {
-  const result = await handleUploadFile(event, filePath);
-  event.reply('upload-file-response', result);
+  console.log('upload-file event received in main process', filePath);
+  try {
+    // First, notify the renderer that we've received the file and are starting to process it
+    event.reply('upload-file-response', { uploaded: true });
+
+    // Then process the file
+    const result = await handleUploadFile(event, filePath);
+
+    // Finally, send the result back to the renderer
+    console.log('Sending result back to renderer', result);
+    event.reply('upload-file-response', result);
+  } catch (error) {
+    console.error('Error in upload-file handler:', error);
+    event.reply('upload-file-response', {
+      canceled: true,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
 });
 
 export default handleUploadFile;

@@ -12,11 +12,7 @@ function SingleFileUploadForm() {
     if (!file) return;
     setUploading(true);
     const filePath = file.path || file.webkitRelativePath || file.name; // Ensure compatibility
-    window.electron.ipcRenderer.sendMessage(
-      'ipc-example',
-      'upload-file',
-      filePath,
-    );
+    window.electron.ipcRenderer.sendMessage('upload-file', filePath);
   }, []);
 
   const onDrop = useCallback(
@@ -39,15 +35,27 @@ function SingleFileUploadForm() {
   useEffect(() => {
     const handleResponse = (result: any) => {
       console.log('Upload response received:', result); // Add logging
-      if (result.uploaded) {
+
+      // Skip processing if the result is just a test message (like "IPC test: pong")
+      if (typeof result === 'string' && result.startsWith('IPC test:')) {
+        console.log('Received test message, ignoring:', result);
+        return;
+      }
+
+      if (result && result.uploaded && !result.downloadUrl) {
+        // This is the initial response indicating the file is being processed
+        console.log('File upload started, processing...');
         setUploading(false);
         setProcessing(true);
-      } else if (result.error || result.canceled) {
+      } else if (result && (result.error || result.canceled)) {
+        // Error occurred during processing
         setUploading(false);
         setProcessing(false);
-        setFailed(result.error);
+        setFailed(result.error || 'Upload was canceled');
         console.log('File upload was canceled or failed.', result);
-      } else {
+      } else if (result && result.downloadUrl) {
+        // Processing completed successfully
+        console.log('File processing completed successfully');
         setResults(result);
         setUploading(false);
         setProcessing(false);
@@ -55,7 +63,7 @@ function SingleFileUploadForm() {
     };
     console.log('Setting up IPC listeners');
     const removeListener = window.electron.ipcRenderer.on(
-      'ipc-example',
+      'upload-file-response',
       handleResponse,
     );
 
@@ -84,14 +92,19 @@ function SingleFileUploadForm() {
           {(() => {
             if (uploading) return 'Uploading';
             if (processing) return 'Processing';
-            if (results && 'downloadUrl' in results) return 'Ready to Download';
+            if (
+              results &&
+              typeof results === 'object' &&
+              'downloadUrl' in results
+            )
+              return 'Ready to Download';
             if (failed) return 'Failed';
             return 'Idle';
           })()}
         </span>
       </div>
       <div>
-        {results && 'downloadUrl' in results && (
+        {results && typeof results === 'object' && 'downloadUrl' in results && (
           <div className="mt-4 flex flex-col items-center space-y-8">
             <button
               type="button"
@@ -201,57 +214,59 @@ function SingleFileUploadForm() {
           </div>
         )}
       </div>
-      {!(results && 'downloadUrl' in results) && !processing && (
-        <div
-          {...getRootProps()}
-          className="w-full p-3 py-36 border border-gray-500 border-dashed"
-        >
-          <input {...getInputProps()} />
-          <div className="flex flex-col md:flex-row gap-1.5 md:py-4">
-            <div className="flex-grow flex items-center justify-center">
-              {uploading ? (
-                <div className="mx-auto w-80 text-center animate-bounce">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    className="h-6 w-6 mx-auto"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+      {!(results && typeof results === 'object' && 'downloadUrl' in results) &&
+        !processing && (
+          <div
+            {...getRootProps()}
+            className="w-full p-3 py-36 border border-gray-500 border-dashed"
+          >
+            <input {...getInputProps()} />
+            <div className="flex flex-col md:flex-row gap-1.5 md:py-4">
+              <div className="flex-grow flex items-center justify-center">
+                {uploading ? (
+                  <div className="mx-auto w-80 text-center animate-bounce">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      className="h-6 w-6 mx-auto"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 10l7-7m0 0l7 7m-7-7v18"
+                      />
+                    </svg>
+                    Uploading
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full py-3 transition-colors duration-150 cursor-pointer hover:text-gray-600">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-14 h-14"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                       strokeWidth={2}
-                      d="M5 10l7-7m0 0l7 7m-7-7v18"
-                    />
-                  </svg>
-                  Uploading
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full py-3 transition-colors duration-150 cursor-pointer hover:text-gray-600">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-14 h-14"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  <strong className="text-sm font-medium">
-                    Drag and drop a .mbtiles file here, or click to select file
-                  </strong>
-                </div>
-              )}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    <strong className="text-sm font-medium">
+                      Drag and drop a .mbtiles file here, or click to select
+                      file
+                    </strong>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       <div className="mt-12 text-center text-white">
         Made with <span className="text-red">❤️</span> by{' '}
         <a href="https://awana.digital" className="text-white hover:underline">

@@ -254,29 +254,23 @@ describe('SMPGenerator', () => {
     const outputPath = '/path/to/output.smp';
 
     // Mock the metadata query to return pbf format
-    mockDb.get.mockImplementationOnce(
+    mockDb.all.mockImplementationOnce(
       (
         query: string,
-        callback: (err: Error | null, row?: Record<string, unknown>) => void,
+        callback: (
+          err: Error | null,
+          rows: { name: string; value: string }[],
+        ) => void,
       ) => {
-        if (query.includes('format')) {
-          callback(null, { name: 'format', value: 'pbf' });
-          // Throw the error to simulate the rejection
-          throw new Error('Vector MBTiles are not yet supported');
+        if (query.includes('metadata')) {
+          callback(null, [{ name: 'format', value: 'pbf' }]);
         }
       },
     );
 
-    let errorThrown = false;
-    try {
-      await generator.fromMbtiles(mbtilesPath, outputPath);
-    } catch (error: any) {
-      errorThrown = true;
-      // eslint-disable-next-line jest/no-conditional-expect
-      expect(error.message).toBe('Vector MBTiles are not yet supported');
-    }
-
-    // If no error was thrown, the test should fail
-    expect(errorThrown).toBe(true);
+    // Expect the function to reject with the correct error message
+    await expect(
+      generator.fromMbtiles(mbtilesPath, outputPath),
+    ).rejects.toThrow('Vector MBTiles are not yet supported');
   });
 });

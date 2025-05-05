@@ -25,7 +25,7 @@ jobs:
         if: runner.os == 'macOS'
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
       - name: Install Build Tools
         if: runner.os == 'macOS'
@@ -33,6 +33,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install setuptools
           python -m pip install wheel
+          npm install -g node-gyp@9.4.0
 
       - name: Install system dependencies
         if: runner.os == 'Linux'
@@ -40,11 +41,29 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y python3 make g++ build-essential libsqlite3-dev
 
+      - name: Set up macOS environment
+        if: runner.os == 'macOS'
+        run: |
+          echo "npm_config_build_from_source=true" >> $GITHUB_ENV
+          echo "npm_config_sqlite_libname=sqlite3" >> $GITHUB_ENV
+          echo "npm_config_sqlite_libpath=$(brew --prefix)/opt/sqlite/lib" >> $GITHUB_ENV
+          echo "npm_config_sqlite_include_dir=$(brew --prefix)/opt/sqlite/include" >> $GITHUB_ENV
+          echo "npm_config_target=26.6.10" >> $GITHUB_ENV
+          echo "npm_config_runtime=electron" >> $GITHUB_ENV
+          echo "npm_config_disturl=https://electronjs.org/headers" >> $GITHUB_ENV
+          brew install sqlite
+
       - name: Install dependencies
         run: |
           npm install
           cd release/app
-          npm install
+          npm install --ignore-scripts
+          cd ../..
+
+      - name: Rebuild native modules for Electron
+        run: |
+          cd release/app
+          npx electron-rebuild -f -w sqlite3 -v 26.6.10
           cd ../..
 
       - name: Run tests

@@ -60,10 +60,18 @@ jobs:
           npm install --ignore-scripts
           cd ../..
 
-      - name: Rebuild native modules for Electron
+      - name: Rebuild native modules for Electron (non-macOS)
+        if: runner.os != 'macOS'
         run: |
           cd release/app
           npx electron-rebuild -f -w sqlite3 -v 26.6.10
+          cd ../..
+
+      - name: Skip sqlite3 for macOS
+        if: runner.os == 'macOS'
+        run: |
+          cd release/app
+          npm uninstall sqlite3
           cd ../..
 
       - name: Run tests

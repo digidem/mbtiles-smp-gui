@@ -85,6 +85,9 @@ jobs:
           # Install sqlite3 with the suggested approach
           npm install sqlite3 --build-from-source --target_arch=arm64 --fallback-to-build
 
+          # Apply the sqlite3 fix
+          node ../../build/fixSqlite3bug.js
+
           # Check the installed packages
           npm list sqlite3
 

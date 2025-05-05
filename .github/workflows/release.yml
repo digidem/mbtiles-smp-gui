@@ -18,6 +18,11 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 make g++ build-essential libsqlite3-dev
+
       - name: Install dependencies
         run: npm install
 

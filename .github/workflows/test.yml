@@ -9,10 +9,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
         node-version: [20]
-        # Temporarily focusing on macOS only with Node 20
-        # Will restore other platforms once macOS is fixed
 
     steps:
       - name: Check out Git repository
@@ -51,6 +49,23 @@ jobs:
           # Install sqlite3 system dependency
           brew install sqlite
 
+      - name: Set up Linux environment
+        if: runner.os == 'Linux'
+        run: |
+          # Print system information for debugging
+          uname -a
+          # Install system dependencies
+          sudo apt-get update
+          sudo apt-get install -y python3 make g++ build-essential libsqlite3-dev
+
+      - name: Set up Windows environment
+        if: runner.os == 'Windows'
+        run: |
+          # Print system information for debugging
+          systeminfo | findstr /B /C:"OS Name" /C:"OS Version" /C:"System Type"
+          # Install system dependencies if needed
+          npm install -g windows-build-tools
+
       - name: Install dependencies
         run: |
           npm install --legacy-peer-deps
@@ -72,6 +87,36 @@ jobs:
           find node_modules/better-sqlite3 -name "*.node" || echo "No .node files found"
 
           cd ../..
+
+      - name: Rebuild native modules for Linux
+        if: runner.os == 'Linux'
+        run: |
+          cd release/app
+          # Rebuild better-sqlite3 for Electron
+          npx electron-rebuild -f -w better-sqlite3 -v 26.6.10
+
+          # Check the installed packages
+          npm list better-sqlite3
+
+          # Check the binary module
+          find node_modules/better-sqlite3 -name "*.node" || echo "No .node files found"
+
+          cd ../..
+
+      - name: Rebuild native modules for Windows
+        if: runner.os == 'Windows'
+        run: |
+          cd release/app
+          # Rebuild better-sqlite3 for Electron
+          npx electron-rebuild -f -w better-sqlite3 -v 26.6.10
+
+          # Check the installed packages
+          npm list better-sqlite3
+
+          # Check the binary module
+          dir node_modules\better-sqlite3\build\Release || echo "No .node files found"
+
+          cd ..\..
 
       - name: Run tests
         run: npm test

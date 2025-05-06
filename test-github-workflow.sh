@@ -6,6 +6,18 @@ set -e  # Exit on error
 echo "=== Testing GitHub Actions workflow locally ==="
 echo "This script simulates the GitHub Actions workflow steps"
 
+# Detect platform
+PLATFORM="unknown"
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+  PLATFORM="linux"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+  PLATFORM="macos"
+elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+  PLATFORM="windows"
+fi
+
+echo "Detected platform: $PLATFORM"
+
 # Check Node.js and npm versions
 echo "=== Checking Node.js and npm versions ==="
 node --version
@@ -13,8 +25,12 @@ npm --version
 
 # Check system information
 echo "=== System information ==="
-uname -a
-arch
+if [[ "$PLATFORM" == "linux" || "$PLATFORM" == "macos" ]]; then
+  uname -a
+  arch
+elif [[ "$PLATFORM" == "windows" ]]; then
+  systeminfo | findstr /B /C:"OS Name" /C:"OS Version" /C:"System Type" || echo "Could not get system info"
+fi
 
 # Install dependencies
 echo "=== Installing dependencies ==="
@@ -43,12 +59,26 @@ npx electron-rebuild -f -w better-sqlite3 -v 26.6.10
 npm list better-sqlite3
 
 # Check the binary module
-find node_modules/better-sqlite3 -name "*.node" || echo "No .node files found"
+if [[ "$PLATFORM" == "linux" || "$PLATFORM" == "macos" ]]; then
+  find node_modules/better-sqlite3 -name "*.node" || echo "No .node files found"
+elif [[ "$PLATFORM" == "windows" ]]; then
+  dir node_modules\\better-sqlite3\\build\\Release || echo "No .node files found"
+fi
 
 cd ../..
 
 # Run tests
 echo "=== Running tests ==="
 npm test
+
+# Test packaging for the current platform
+echo "=== Testing packaging for $PLATFORM ==="
+if [[ "$PLATFORM" == "linux" ]]; then
+  npm run package:linux -- --dir
+elif [[ "$PLATFORM" == "macos" ]]; then
+  npm run package:mac -- --dir
+elif [[ "$PLATFORM" == "windows" ]]; then
+  npm run package:win -- --dir
+fi
 
 echo "=== Workflow test completed ==="

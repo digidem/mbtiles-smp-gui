@@ -26,39 +26,68 @@ jobs:
         if: runner.os == 'macOS'
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
       - name: Install Build Tools
         if: runner.os == 'macOS'
         run: |
           python -m pip install --upgrade pip
-          python -m pip install setuptools
-          python -m pip install wheel
+          python -m pip install setuptools wheel
+          npm install -g node-gyp@latest
 
-      - name: Install system dependencies
+      - name: Install system dependencies for Linux
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y python3 make g++ build-essential libsqlite3-dev
 
+      - name: Install system dependencies for Windows
+        if: runner.os == 'Windows'
+        run: |
+          # Print system information for debugging
+          systeminfo | findstr /B /C:"OS Name" /C:"OS Version" /C:"System Type"
+          # Install system dependencies if needed
+          npm install -g windows-build-tools
+
       - name: Install dependencies
         run: |
-          npm install
+          npm install --legacy-peer-deps
           cd release/app
-          npm install
+          npm install --ignore-scripts
           cd ../..
+
+      - name: Rebuild native modules for macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          cd release/app
+          npx electron-rebuild -f -w better-sqlite3 -v 26.6.10
+          cd ../..
+
+      - name: Rebuild native modules for Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cd release/app
+          npx electron-rebuild -f -w better-sqlite3 -v 26.6.10
+          cd ../..
+
+      - name: Rebuild native modules for Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd release/app
+          npx electron-rebuild -f -w better-sqlite3 -v 26.6.10
+          cd ..\..
 
       - name: Build Electron app for macOS
         if: matrix.os == 'macos-latest'
-        run: npm run package -- --mac
+        run: npm run package:mac
 
       - name: Build Electron app for Ubuntu
         if: matrix.os == 'ubuntu-latest'
-        run: npm run package -- --linux
+        run: npm run package:linux
 
       - name: Build Electron app for Windows
         if: matrix.os == 'windows-latest'
-        run: npm run package -- --win
+        run: npm run package:win
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4

@@ -31,6 +31,8 @@
     "lint": "cross-env NODE_ENV=development eslint . --ext .js,.jsx,.ts,.tsx",
     "package": "ts-node ./.erb/scripts/clean.js dist && npm run build && npm run fix:sqlite && electron-builder build --publish never && npm run build:dll",
     "package:mac": "ts-node ./.erb/scripts/clean.js dist && npm run build && npm run fix:sqlite && electron-builder build --mac --publish never && npm run build:dll",
+    "package:win": "ts-node ./.erb/scripts/clean.js dist && npm run build && npm run fix:sqlite && electron-builder build --win --publish never && npm run build:dll",
+    "package:linux": "ts-node ./.erb/scripts/clean.js dist && npm run build && npm run fix:sqlite && electron-builder build --linux --publish never && npm run build:dll",
     "fix:sqlite": "node ./.erb/scripts/fix-sqlite3-bug.js",
     "rebuild": "electron-rebuild --parallel --types prod,dev,optional --module-dir release/app",
     "start": "ts-node ./.erb/scripts/check-port-in-use.js && npm run start:renderer",

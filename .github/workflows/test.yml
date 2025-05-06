@@ -6,135 +6,50 @@ on:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
         node-version: [20]
+    uses: ./.github/workflows/setup-environment.yml
+    with:
+      os: ${{ matrix.os }}
+      node-version: ${{ matrix.node-version }}
 
+  run-tests-macos:
+    needs: test
+    runs-on: macos-latest
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
 
-      - name: Check Node.js and npm versions
-        run: |
-          node --version
-          npm --version
+      - name: Run tests
+        run: npm test
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Build Tools
-        if: runner.os == 'macOS'
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install setuptools wheel
-          npm install -g node-gyp@latest
-
-      - name: Set up macOS environment
-        if: runner.os == 'macOS'
-        run: |
-          # Print system information for debugging
-          uname -a
-          arch
-          # Install sqlite3 system dependency
-          brew install sqlite
-
-      - name: Set up Linux environment
-        if: runner.os == 'Linux'
-        run: |
-          # Print system information for debugging
-          uname -a
-          # Install system dependencies
-          sudo apt-get update
-          sudo apt-get install -y python3 make g++ build-essential libsqlite3-dev
-
-      - name: Set up Windows environment
-        if: runner.os == 'Windows'
-        run: |
-          # Print system information for debugging
-          systeminfo | findstr /B /C:"OS Name" /C:"OS Version" /C:"System Type"
-          # GitHub Actions Windows runners already have Visual Studio Build Tools installed
-          echo "Using pre-installed Visual Studio Build Tools"
-          # Install node-gyp globally
-          npm install -g node-gyp
-          # Configure node-gyp to use the Python we just set up
-          $pythonPath = (Get-Command python).Path
-          echo "Python path: $pythonPath"
-
-          # Create or update .npmrc file with Python path and MSVS version
-          echo "python=$pythonPath" | Out-File -Append -Encoding utf8 $env:USERPROFILE\.npmrc
-          echo "msvs_version=2019" | Out-File -Append -Encoding utf8 $env:USERPROFILE\.npmrc
-
-          # Show the .npmrc file
-          echo "Contents of .npmrc:"
-          Get-Content $env:USERPROFILE\.npmrc
+  run-tests-linux:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: |
-          npm install --legacy-peer-deps
-          cd release/app
-          npm install --ignore-scripts
-          cd ../..
+        run: npm install --legacy-peer-deps
 
-      - name: Rebuild native modules for macOS
-        if: runner.os == 'macOS'
-        run: |
-          cd release/app
-          # Rebuild better-sqlite3 for Electron
-          npx electron-rebuild -f -w better-sqlite3 -v 26.6.10
+      - name: Run tests
+        run: npm test
 
-          # Check the installed packages
-          npm list better-sqlite3
+  run-tests-windows:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
 
-          # Check the binary module
-          find node_modules/better-sqlite3 -name "*.node" || echo "No .node files found"
-
-          cd ../..
-
-      - name: Rebuild native modules for Linux
-        if: runner.os == 'Linux'
-        run: |
-          cd release/app
-          # Rebuild better-sqlite3 for Electron
-          npx electron-rebuild -f -w better-sqlite3 -v 26.6.10
-
-          # Check the installed packages
-          npm list better-sqlite3
-
-          # Check the binary module
-          find node_modules/better-sqlite3 -name "*.node" || echo "No .node files found"
-
-          cd ../..
-
-      - name: Rebuild native modules for Windows
-        if: runner.os == 'Windows'
-        run: |
-          cd release/app
-          # Rebuild better-sqlite3 for Electron
-          npx electron-rebuild -f -w better-sqlite3 -v 26.6.10
-
-          # Check the installed packages
-          npm list better-sqlite3
-
-          # Check the binary module
-          if (Test-Path -Path "node_modules\better-sqlite3\build\Release") {
-            dir node_modules\better-sqlite3\build\Release
-          } else {
-            echo "No .node files found in build\Release"
-            # Check other possible locations
-            dir node_modules\better-sqlite3 -Recurse -Filter "*.node" | Select-Object FullName
-          }
-
-          cd ..\..
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
 
       - name: Run tests
         run: npm test

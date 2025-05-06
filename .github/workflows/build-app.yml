@@ -1,0 +1,44 @@
+name: Build Application
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+        description: 'Operating system to run on'
+      build-type:
+        required: true
+        type: string
+        description: 'Type of build (mac, linux, win)'
+
+jobs:
+  build:
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Build Electron app for macOS
+        if: inputs.build-type == 'mac'
+        run: npm run package:mac
+
+      - name: Build Electron app for Linux
+        if: inputs.build-type == 'linux'
+        run: npm run package:linux
+
+      - name: Build Electron app for Windows
+        if: inputs.build-type == 'win'
+        run: npm run package:win
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ inputs.os }}
+          path: |
+            ./release/build/*.AppImage
+            ./release/build/*.exe
+            ./release/build/*.dmg
+            ./release/build/*.zip
+            ./release/build/*.msi
+          if-no-files-found: ignore

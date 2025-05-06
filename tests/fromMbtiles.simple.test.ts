@@ -1,4 +1,10 @@
 // Mock dependencies before importing the module
+// Import the mocked modules
+import fs from 'fs';
+import fsExtra from 'fs-extra';
+import yauzl from 'yauzl';
+import { MBTiles } from 'mbtiles-reader';
+
 jest.mock('fs', () => {
   const mockOn = jest.fn().mockImplementation(function (
     this: any,
@@ -108,14 +114,12 @@ jest.mock('yauzl', () => {
 
 // Simplified extractZip function for testing
 async function extractZip(zipPath: string, outputDir: string): Promise<void> {
-  // Use dynamic imports for all modules
-  const yauzl = await import('yauzl');
+  // Use path and fsPromises modules
   const path = await import('path');
   const fsPromises = await import('fs/promises');
-  const fs = await import('fs');
 
   return new Promise((resolve, reject) => {
-    yauzl.default.open(zipPath, { lazyEntries: true }, (err, zipfile) => {
+    yauzl.open(zipPath, { lazyEntries: true }, (err, zipfile) => {
       if (err || !zipfile) {
         return reject(err || new Error('Failed to open zip file'));
       }
@@ -152,7 +156,7 @@ async function extractZip(zipPath: string, outputDir: string): Promise<void> {
                   );
                 }
 
-                const writeStream = fs.default.createWriteStream(entryPath);
+                const writeStream = fs.createWriteStream(entryPath);
                 readStream.on('end', () => {
                   zipfile.readEntry();
                 });
@@ -177,19 +181,14 @@ async function convertMBTilesToSMP(
   mbtilesPath: string,
   outputPath: string,
 ): Promise<void> {
-  // Use dynamic imports for all modules
-  const fs = await import('fs');
+  // Use archiver
   const archiver = await import('archiver');
-
-  // Dynamically import mbtiles-reader (ES Module)
-  const mbtilesReader = await import('mbtiles-reader');
-  const { MBTiles } = mbtilesReader;
 
   // Open the MBTiles file
   const reader = new MBTiles(mbtilesPath);
 
   // Create a ZIP file for the SMP package
-  const output = fs.default.createWriteStream(outputPath);
+  const output = fs.createWriteStream(outputPath);
   const archive = archiver.default('zip', {
     zlib: { level: 9 }, // Maximum compression
   });
@@ -248,14 +247,13 @@ async function fromMbtiles(
   mbtilesPath: string,
   outputPath: string,
 ): Promise<void> {
-  // Use dynamic imports for all modules
-  const fsExtra = await import('fs-extra');
+  // Use path, os, and crypto modules
   const path = await import('path');
   const os = await import('os');
   const crypto = await import('crypto');
 
   // Create output directory
-  fsExtra.default.ensureDirSync(outputPath);
+  fsExtra.ensureDirSync(outputPath);
 
   // Create a temporary directory for the SMP file
   const tempDir = path.join(
@@ -263,7 +261,7 @@ async function fromMbtiles(
     'mbtiles-to-smp',
     crypto.randomBytes(16).toString('hex'),
   );
-  fsExtra.default.ensureDirSync(tempDir);
+  fsExtra.ensureDirSync(tempDir);
 
   // Create the SMP file path
   const smpFilePath = path.join(tempDir, 'map.smp');
@@ -275,7 +273,7 @@ async function fromMbtiles(
   await extractZip(smpFilePath, outputPath);
 
   // Clean up the temporary directory
-  fsExtra.default.removeSync(tempDir);
+  fsExtra.removeSync(tempDir);
 }
 
 describe('fromMbtiles', () => {
@@ -284,45 +282,39 @@ describe('fromMbtiles', () => {
   });
 
   it('should convert MBTiles to SMP format', async () => {
-    // Get the mocked modules
-    const fsExtra = await import('fs-extra');
-    const yauzl = await import('yauzl');
-    const mbtilesReader = await import('mbtiles-reader');
-
     // Call the function
-    const mbtilesPath = '/path/to/test.mbtiles';
-    const outputPath = '/path/to/output';
+    const mbtilesPath = './test.mbtiles';
+    const outputPath = './output';
 
     await fromMbtiles(mbtilesPath, outputPath);
 
     // Verify that the output directory was created
-    expect(fsExtra.default.ensureDirSync).toHaveBeenCalledWith(outputPath);
+    expect(fsExtra.ensureDirSync).toHaveBeenCalledWith(outputPath);
 
     // Verify that MBTiles was used
-    expect(mbtilesReader.MBTiles).toHaveBeenCalledWith(mbtilesPath);
+    expect(MBTiles).toHaveBeenCalledWith(mbtilesPath);
 
     // Verify that the zip file was extracted
-    expect(yauzl.default.open).toHaveBeenCalledWith(
+    expect(yauzl.open).toHaveBeenCalledWith(
       expect.any(String),
       { lazyEntries: true },
       expect.any(Function),
     );
 
     // Verify that the temporary directory was cleaned up
-    expect(fsExtra.default.removeSync).toHaveBeenCalled();
+    expect(fsExtra.removeSync).toHaveBeenCalled();
   });
 
   it('should handle errors during conversion', async () => {
     // Mock MBTiles to throw an error
-    const mbtilesReader = await import('mbtiles-reader');
-    const mockMBTiles = mbtilesReader.MBTiles as jest.Mock;
+    const mockMBTiles = MBTiles as jest.Mock;
     mockMBTiles.mockImplementationOnce(() => {
       throw new Error('Conversion failed');
     });
 
     // Call the function
-    const mbtilesPath = '/path/to/test.mbtiles';
-    const outputPath = '/path/to/output';
+    const mbtilesPath = './test.mbtiles';
+    const outputPath = './output';
 
     await expect(fromMbtiles(mbtilesPath, outputPath)).rejects.toThrow(
       'Conversion failed',

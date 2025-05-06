@@ -40,7 +40,17 @@ npm install -g node-gyp
 echo "=== Configuring node-gyp to use Python ==="
 PYTHON_PATH=$(python -c "import sys; print(sys.executable)")
 echo "Python path: $PYTHON_PATH"
-npm config set python $PYTHON_PATH
+
+# Create or update .npmrc file with Python path and MSVS version
+echo "=== Configuring .npmrc file ==="
+echo "python=$PYTHON_PATH" >> ~/.npmrc
+if [[ "$PLATFORM" == "windows" ]]; then
+  echo "msvs_version=2019" >> ~/.npmrc
+fi
+
+# Show the .npmrc file
+echo "=== Contents of .npmrc ==="
+cat ~/.npmrc
 
 # Install dependencies
 echo "=== Installing dependencies ==="

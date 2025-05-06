@@ -34,11 +34,15 @@ npm install -g node-gyp
 Write-Host "`n=== Configuring node-gyp to use Python ===" -ForegroundColor Green
 $pythonPath = (Get-Command python).Path
 Write-Host "Python path: $pythonPath" -ForegroundColor Green
-npm config set python $pythonPath
 
-# Configure node-gyp to use Visual Studio Build Tools
-Write-Host "`n=== Configuring node-gyp to use Visual Studio Build Tools ===" -ForegroundColor Green
-npm config set msvs_version 2019
+# Create or update .npmrc file with Python path and MSVS version
+Write-Host "`n=== Configuring .npmrc file ===" -ForegroundColor Green
+echo "python=$pythonPath" | Out-File -Append -Encoding utf8 $env:USERPROFILE\.npmrc
+echo "msvs_version=2019" | Out-File -Append -Encoding utf8 $env:USERPROFILE\.npmrc
+
+# Show the .npmrc file
+Write-Host "`n=== Contents of .npmrc ===" -ForegroundColor Green
+Get-Content $env:USERPROFILE\.npmrc
 
 # Install dependencies
 Write-Host "`n=== Installing dependencies ===" -ForegroundColor Green
@@ -71,7 +75,10 @@ Write-Host "`n=== Checking binary modules ===" -ForegroundColor Green
 if (Test-Path -Path "node_modules\better-sqlite3\build\Release") {
     Get-ChildItem -Path "node_modules\better-sqlite3\build\Release" -Filter "*.node"
 } else {
-    Write-Host "No .node files found" -ForegroundColor Yellow
+    Write-Host "No .node files found in build\Release" -ForegroundColor Yellow
+    # Check other possible locations
+    Write-Host "Searching for .node files in better-sqlite3 directory:" -ForegroundColor Yellow
+    Get-ChildItem -Path "node_modules\better-sqlite3" -Recurse -Filter "*.node" | Select-Object FullName
 }
 
 Pop-Location

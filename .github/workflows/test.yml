@@ -69,10 +69,14 @@ jobs:
           # Configure node-gyp to use the Python we just set up
           $pythonPath = (Get-Command python).Path
           echo "Python path: $pythonPath"
-          npm config set python $pythonPath
 
-          # Configure node-gyp to use Visual Studio Build Tools
-          npm config set msvs_version 2019
+          # Create or update .npmrc file with Python path and MSVS version
+          echo "python=$pythonPath" | Out-File -Append -Encoding utf8 $env:USERPROFILE\.npmrc
+          echo "msvs_version=2019" | Out-File -Append -Encoding utf8 $env:USERPROFILE\.npmrc
+
+          # Show the .npmrc file
+          echo "Contents of .npmrc:"
+          Get-Content $env:USERPROFILE\.npmrc
 
       - name: Install dependencies
         run: |
@@ -122,7 +126,13 @@ jobs:
           npm list better-sqlite3
 
           # Check the binary module
-          dir node_modules\better-sqlite3\build\Release || echo "No .node files found"
+          if (Test-Path -Path "node_modules\better-sqlite3\build\Release") {
+            dir node_modules\better-sqlite3\build\Release
+          } else {
+            echo "No .node files found in build\Release"
+            # Check other possible locations
+            dir node_modules\better-sqlite3 -Recurse -Filter "*.node" | Select-Object FullName
+          }
 
           cd ..\..
 

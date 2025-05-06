@@ -11,8 +11,30 @@ function SingleFileUploadForm() {
   const handleUpload = useCallback(async (file: File) => {
     if (!file) return;
     setUploading(true);
-    const filePath = file.path || file.webkitRelativePath || file.name; // Ensure compatibility
-    window.electron.ipcRenderer.sendMessage('upload-file', filePath);
+
+    // For drag and drop operations, we need to create a temporary file
+    // and copy the contents to ensure we have a valid file path
+    if (file.path) {
+      // If we have a direct file path (from file dialog), use it
+      console.log('Using direct file path:', file.path);
+      window.electron.ipcRenderer.sendMessage('upload-file', {
+        type: 'path',
+        path: file.path,
+      });
+    } else {
+      // For drag and drop, we need to send the file data to the main process
+      console.log('Using file blob for drag and drop');
+
+      // Read the file as an ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer();
+
+      // Send the file data to the main process
+      window.electron.ipcRenderer.sendMessage('upload-file', {
+        type: 'buffer',
+        name: file.name,
+        buffer: arrayBuffer,
+      });
+    }
   }, []);
 
   const onDrop = useCallback(
@@ -26,6 +48,16 @@ function SingleFileUploadForm() {
             return;
           }
         }
+
+        // Debug information about the file
+        console.log('Drag and drop file details:', {
+          name: file.name,
+          path: file.path,
+          webkitRelativePath: file.webkitRelativePath,
+          size: file.size,
+          type: file.type,
+        });
+
         handleUpload(file);
       }
     },

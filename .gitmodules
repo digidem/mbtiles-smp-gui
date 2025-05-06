@@ -1,0 +1,11 @@
+[submodule "vendor/styled-map-package"]
+	path = vendor/styled-map-package
+	url = https://github.com/digidem/styled-map-package.git
+
+[submodule "styled-map-package"]
+	path = styled-map-package
+	url = https://github.com/digidem/styled-map-package.git
+
+[submodule "mbtiles-reader"]
+	path = mbtiles-reader
+	url = https://github.com/digidem/mbtiles-reader.git

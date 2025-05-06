@@ -21,15 +21,63 @@ jobs:
 
       - name: Build Electron app for macOS
         if: inputs.build-type == 'mac'
-        run: npm run package:mac
+        run: |
+          # Check environment before building
+          echo "Node version: $(node -v)"
+          echo "NPM version: $(npm -v)"
+
+          # Ensure node_modules/.bin is in PATH
+          export PATH="$PATH:$(pwd)/node_modules/.bin"
+          echo "PATH: $PATH"
+
+          # Run the package script
+          npm run package:mac
+
+          # Check the build output
+          find ./release/build -type f | sort
 
       - name: Build Electron app for Linux
         if: inputs.build-type == 'linux'
-        run: npm run package:linux
+        run: |
+          # Check environment before building
+          echo "Node version: $(node -v)"
+          echo "NPM version: $(npm -v)"
+          echo "Python version: $(python3 --version)"
+
+          # Ensure node_modules/.bin is in PATH
+          export PATH="$PATH:$(pwd)/node_modules/.bin"
+          echo "PATH: $PATH"
+
+          # Check if better-sqlite3 is installed in release/app
+          if [ -d "release/app/node_modules/better-sqlite3" ]; then
+            echo "better-sqlite3 is installed in release/app"
+            ls -la release/app/node_modules/better-sqlite3
+          else
+            echo "better-sqlite3 is NOT installed in release/app"
+          fi
+
+          # Run the package script with increased verbosity
+          NODE_DEBUG=electron-builder,electron-rebuild npm run package:linux
+
+          # Check the build output
+          find ./release/build -type f | sort
 
       - name: Build Electron app for Windows
         if: inputs.build-type == 'win'
-        run: npm run package:win
+        run: |
+          # Check environment before building
+          echo "Node version: $(node -v)"
+          echo "NPM version: $(npm -v)"
+
+          # Ensure node_modules/.bin is in PATH (Windows syntax)
+          $env:PATH += ";$(Get-Location)\node_modules\.bin"
+          echo "PATH: $env:PATH"
+
+          # Run the package script
+          npm run package:win
+
+          # Check the build output
+          Get-ChildItem -Path .\release\build -Recurse -File | ForEach-Object { $_.FullName }
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

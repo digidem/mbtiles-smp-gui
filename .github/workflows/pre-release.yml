@@ -48,6 +48,17 @@ jobs:
           npm install
           cd ../..
 
+      - name: Apply sqlite3 fix for macOS
+        if: runner.os == 'macOS'
+        run: |
+          # Apply the sqlite3 fix for the main package
+          node ./.erb/scripts/fix-sqlite3-bug.js
+
+          # Apply the fix for the release/app package
+          cd release/app
+          node ../../.erb/scripts/fix-sqlite3-bug.js
+          cd ../..
+
       - name: Build Electron app for macOS
         if: matrix.os == 'macos-latest'
         run: npm run package -- --mac

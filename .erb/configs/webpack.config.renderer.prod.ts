@@ -38,8 +38,9 @@ const configuration: webpack.Configuration = {
 
   module: {
     rules: [
+      // CSS Modules
       {
-        test: /\.s?(a|c)ss$/,
+        test: /\.module\.css$/,
         use: [
           MiniCssExtractPlugin.loader,
           {
@@ -50,12 +51,17 @@ const configuration: webpack.Configuration = {
               importLoaders: 1,
             },
           },
-          'sass-loader',
         ],
-        include: /\.module\.s?(c|a)ss$/,
       },
+      // Regular CSS
       {
-        test: /\.s?(a|c)ss$/,
+        test: /\.css$/,
+        exclude: [/\.module\.css$/, /global\.css$/],
+        use: [MiniCssExtractPlugin.loader, 'css-loader'],
+      },
+      // SCSS Modules
+      {
+        test: /\.module\.s[ac]ss$/,
         use: [
           MiniCssExtractPlugin.loader,
           {
@@ -66,16 +72,39 @@ const configuration: webpack.Configuration = {
               importLoaders: 1,
             },
           },
-          'sass-loader',
+          {
+            loader: 'sass-loader',
+            options: {
+              sassOptions: {
+                api: 'modern',
+              },
+            },
+          },
         ],
-        include: /\.module\.s?(c|a)ss$/,
       },
+      // Regular SCSS
       {
-        test: /\.s?(a|c)ss$/,
+        test: /\.s[ac]ss$/,
+        exclude: /\.module\.s[ac]ss$/,
         use: [
           MiniCssExtractPlugin.loader,
           'css-loader',
-          'sass-loader',
+          {
+            loader: 'sass-loader',
+            options: {
+              sassOptions: {
+                api: 'modern',
+              },
+            },
+          },
+        ],
+      },
+      // Global CSS with Tailwind
+      {
+        test: /global\.css$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          'css-loader',
           {
             loader: 'postcss-loader',
             options: {
@@ -85,7 +114,6 @@ const configuration: webpack.Configuration = {
             },
           },
         ],
-        exclude: /\.module\.s?(c|a)ss$/,
       },
       // Fonts
       {
@@ -121,7 +149,32 @@ const configuration: webpack.Configuration = {
 
   optimization: {
     minimize: true,
-    minimizer: [new TerserPlugin(), new CssMinimizerPlugin()],
+    minimizer: [
+      new TerserPlugin(),
+      new CssMinimizerPlugin({
+        minimizerOptions: {
+          preset: [
+            'default',
+            {
+              discardComments: { removeAll: true },
+              // Disable all problematic optimizations
+              normalizeWhitespace: false,
+              minifySelectors: false,
+              calc: false,
+              colormin: false,
+              convertValues: false,
+              discardEmpty: false,
+              discardOverridden: false,
+              mergeIdents: false,
+              reduceIdents: false,
+              reduceInitial: false,
+              svgo: false,
+              zindex: false,
+            },
+          ],
+        },
+      }),
+    ],
   },
 
   plugins: [

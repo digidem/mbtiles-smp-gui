@@ -36,6 +36,20 @@ npm run package -- --[option]
 # Example: npm run package -- --mac
 ```
 
+### macOS Specific Build Issues
+
+If you encounter issues with sqlite3 on macOS during packaging or running the app, you can use the provided fix:
+
+```bash
+# Fix sqlite3 binary configuration
+npm run fix:sqlite3
+
+# Then package for macOS specifically
+npm run package:mac
+```
+
+This fixes a compatibility issue between sqlite3 and Electron on macOS by modifying the sqlite3 package.json configuration. The fix script is located at `.erb/scripts/fix-sqlite3-bug.js`.
+
 ### Debugging Production Builds
 
 You can debug your production build with devtools by simply setting the `DEBUG_PROD` env variable

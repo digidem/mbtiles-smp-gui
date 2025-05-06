@@ -19,9 +19,11 @@ if (process.env.NODE_ENV === 'production') {
 
 const port = process.env.PORT || 1212;
 const manifest = path.resolve(webpackPaths.dllPath, 'renderer.json');
+// Check if this config is being used by another config
+const requiredFrom = module.filename || '';
 const skipDLLs =
-  module.parent?.filename.includes('webpack.config.renderer.dev.dll') ||
-  module.parent?.filename.includes('webpack.config.eslint');
+  requiredFrom.includes('webpack.config.renderer.dev.dll') ||
+  requiredFrom.includes('webpack.config.eslint');
 
 /**
  * Warn if the DLL is not built
@@ -62,8 +64,9 @@ const configuration: webpack.Configuration = {
 
   module: {
     rules: [
+      // CSS Modules
       {
-        test: /\.s?(c|a)ss$/,
+        test: /\.module\.css$/,
         use: [
           'style-loader',
           {
@@ -74,12 +77,17 @@ const configuration: webpack.Configuration = {
               importLoaders: 1,
             },
           },
-          'sass-loader',
         ],
-        include: /\.module\.s?(c|a)ss$/,
       },
+      // Regular CSS
       {
-        test: /\.s?css$/,
+        test: /\.css$/,
+        exclude: /\.module\.css$/,
+        use: ['style-loader', 'css-loader'],
+      },
+      // SCSS Modules
+      {
+        test: /\.module\.s[ac]ss$/,
         use: [
           'style-loader',
           {
@@ -90,16 +98,39 @@ const configuration: webpack.Configuration = {
               importLoaders: 1,
             },
           },
-          'sass-loader',
+          {
+            loader: 'sass-loader',
+            options: {
+              sassOptions: {
+                api: 'modern',
+              },
+            },
+          },
         ],
-        include: /\.module\.s?(c|a)ss$/,
       },
+      // Regular SCSS
       {
-        test: /\.s?css$/,
+        test: /\.s[ac]ss$/,
+        exclude: /\.module\.s[ac]ss$/,
         use: [
           'style-loader',
           'css-loader',
-          'sass-loader',
+          {
+            loader: 'sass-loader',
+            options: {
+              sassOptions: {
+                api: 'modern',
+              },
+            },
+          },
+        ],
+      },
+      // Global CSS with Tailwind
+      {
+        test: /global\.css$/,
+        use: [
+          'style-loader',
+          'css-loader',
           {
             loader: 'postcss-loader',
             options: {
@@ -109,7 +140,6 @@ const configuration: webpack.Configuration = {
             },
           },
         ],
-        exclude: /\.module\.s?(c|a)ss$/,
       },
       // Fonts
       {

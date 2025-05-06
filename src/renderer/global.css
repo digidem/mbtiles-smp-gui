@@ -1,0 +1,12 @@
+/* Tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Your custom styles below */
+body {
+  position: relative;
+  color: white;
+  height: 100vh;
+  background-color: #1e3a8a;
+}

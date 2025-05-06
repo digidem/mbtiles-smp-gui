@@ -1,27 +1,27 @@
 /**
- * This script fixes the sqlite3 binary compatibility issue with Electron on macOS.
- * It modifies the sqlite3 package.json to use the correct binary configuration.
+ * This script fixes the better-sqlite3 binary compatibility issue with Electron on macOS.
+ * It modifies the better-sqlite3 package.json to use the correct binary configuration.
  */
 const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
 
-function fixSqlite3() {
+function fixBetterSqlite3() {
   console.log(
     chalk.blue(
-      'Fixing sqlite3 binary configuration for Electron compatibility...',
+      'Fixing better-sqlite3 binary configuration for Electron compatibility...',
     ),
   );
 
-  // Paths to check for sqlite3 package.json
+  // Paths to check for better-sqlite3 package.json
   const possiblePaths = [
-    path.join(process.cwd(), 'node_modules', 'sqlite3', 'package.json'),
+    path.join(process.cwd(), 'node_modules', 'better-sqlite3', 'package.json'),
     path.join(
       process.cwd(),
       'release',
       'app',
       'node_modules',
-      'sqlite3',
+      'better-sqlite3',
       'package.json',
     ),
   ];
@@ -29,29 +29,33 @@ function fixSqlite3() {
   let modified = false;
 
   // Using forEach instead of for...of to avoid linting issues
-  possiblePaths.forEach((sqlite3Path) => {
-    if (fs.existsSync(sqlite3Path)) {
+  possiblePaths.forEach((sqlitePath) => {
+    if (fs.existsSync(sqlitePath)) {
       try {
-        console.log(chalk.green(`Found sqlite3 at: ${sqlite3Path}`));
+        console.log(chalk.green(`Found better-sqlite3 at: ${sqlitePath}`));
         // eslint-disable-next-line import/no-dynamic-require, global-require
-        const sqlite3 = require(sqlite3Path);
+        const sqlite = require(sqlitePath);
 
-        // Set the binary configuration
-        sqlite3.binary = {
-          napi_versions: [6],
-        };
+        // Set the binary configuration if needed
+        if (!sqlite.binary) {
+          sqlite.binary = {};
+        }
+
+        sqlite.binary.napi_versions = [6];
 
         // Write the modified package.json back
-        fs.writeFileSync(sqlite3Path, JSON.stringify(sqlite3, null, 2));
+        fs.writeFileSync(sqlitePath, JSON.stringify(sqlite, null, 2));
         console.log(
           chalk.green(
-            `Successfully modified sqlite3 package.json at: ${sqlite3Path}`,
+            `Successfully modified better-sqlite3 package.json at: ${sqlitePath}`,
           ),
         );
         modified = true;
       } catch (error) {
         console.error(
-          chalk.red(`Error modifying sqlite3 package.json at ${sqlite3Path}:`),
+          chalk.red(
+            `Error modifying better-sqlite3 package.json at ${sqlitePath}:`,
+          ),
           error,
         );
       }
@@ -59,9 +63,11 @@ function fixSqlite3() {
   });
 
   if (!modified) {
-    console.log(chalk.yellow('No sqlite3 package.json found to modify.'));
+    console.log(
+      chalk.yellow('No better-sqlite3 package.json found to modify.'),
+    );
   }
 }
 
 // Run the fix
-fixSqlite3();
+fixBetterSqlite3();

@@ -62,26 +62,14 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           cd release/app
-          # Remove existing sqlite3
-          npm uninstall sqlite3
-
-          # Install specific version of node-addon-api that's compatible with Electron 26
-          npm install node-addon-api@5.1.0
-
-          # Install sqlite3 with the suggested approach
-          npm install sqlite3@5.1.6 --build-from-source --target_arch=arm64 --fallback-to-build
-
-          # Apply the sqlite3 fix
-          node ../../.erb/scripts/fix-sqlite3-bug.js
-
-          # Rebuild for Electron
-          npx electron-rebuild -f -w sqlite3 -v 26.6.10
+          # Rebuild better-sqlite3 for Electron
+          npx electron-rebuild -f -w better-sqlite3 -v 26.6.10
 
           # Check the installed packages
-          npm list sqlite3
+          npm list better-sqlite3
 
           # Check the binary module
-          find node_modules/sqlite3 -name "*.node" || echo "No .node files found"
+          find node_modules/better-sqlite3 -name "*.node" || echo "No .node files found"
 
           cd ../..
 

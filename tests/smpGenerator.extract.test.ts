@@ -2,37 +2,15 @@
 // Import the SMPGenerator class
 import SMPGenerator from '../src/main/smpGenerator';
 
-// Mock dependencies before importing SMPGenerator
-jest.mock('archiver', () => ({
-  __esModule: true,
-  default: jest.fn().mockReturnValue({
-    pipe: jest.fn().mockReturnThis(),
-    directory: jest.fn().mockReturnThis(),
-    finalize: jest.fn().mockReturnThis(),
-    on: jest.fn().mockImplementation((event, callback) => {
-      if (event === 'close') {
-        callback();
-      }
-      return { pipe: jest.fn() };
-    }),
-  }),
+// Mock the mbtilesConverter module
+jest.mock('../src/main/mbtilesConverter', () => ({
+  convertMBTilesToSMP: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('fs-extra', () => ({
   ensureDirSync: jest.fn(),
   removeSync: jest.fn(),
 }));
-
-jest.mock('sqlite3', () => {
-  const mockDb = {
-    all: jest.fn(),
-    close: jest.fn(),
-  };
-
-  return {
-    Database: jest.fn().mockReturnValue(mockDb),
-  };
-});
 
 // Mock dependencies
 jest.mock('node:fs', () => {

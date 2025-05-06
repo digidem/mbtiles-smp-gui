@@ -15,7 +15,7 @@ jobs:
   setup-linux:
     uses: ./.github/workflows/setup-environment.yml
     with:
-      os: ubuntu-latest
+      os: ubuntu-20.04
       node-version: '20'
 
   setup-windows:
@@ -35,7 +35,7 @@ jobs:
     needs: setup-linux
     uses: ./.github/workflows/build-app.yml
     with:
-      os: ubuntu-latest
+      os: ubuntu-20.04
       build-type: linux
 
   build-windows:

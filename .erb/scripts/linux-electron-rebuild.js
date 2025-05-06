@@ -93,15 +93,72 @@ async function rebuildNativeModules() {
       );
     }
 
-    // Install better-sqlite3 with build from source
-    console.log(chalk.blue('Installing better-sqlite3 from source...'));
-    runCommand('npm install better-sqlite3@11.9.1 --build-from-source');
-
-    // Run electron-rebuild with verbose output
-    console.log(chalk.blue('Running electron-rebuild...'));
-    runCommand(
-      `npx electron-rebuild -f -w better-sqlite3 -v ${electronVersion} --arch=x64 --verbose`,
+    // Install better-sqlite3 with build from source and specific flags for older glibc compatibility
+    console.log(
+      chalk.blue(
+        'Installing better-sqlite3 from source with older glibc compatibility...',
+      ),
     );
+    runCommand(
+      'npm install better-sqlite3@11.9.1 --build-from-source --no-save',
+    );
+
+    // Set environment variables to ensure compatibility with older glibc
+    console.log(
+      chalk.blue(
+        'Setting environment variables for older glibc compatibility...',
+      ),
+    );
+    process.env.CFLAGS = '-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -fPIC';
+    process.env.CXXFLAGS = '-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -fPIC';
+
+    // Create a .npmrc file with specific node-gyp configuration
+    console.log(
+      chalk.blue('Creating .npmrc with specific node-gyp configuration...'),
+    );
+    fs.writeFileSync(
+      '.npmrc',
+      'node-gyp-binary[platform]=linux\nnode-gyp-binary[arch]=x64\n',
+    );
+
+    // Run electron-rebuild with verbose output and specific flags for older glibc compatibility
+    console.log(
+      chalk.blue('Running electron-rebuild with compatibility flags...'),
+    );
+    runCommand(
+      `npx electron-rebuild -f -w better-sqlite3 -v ${electronVersion} --arch=x64 --verbose --dist-url=https://electronjs.org/headers`,
+    );
+
+    // Apply additional compatibility fixes
+    console.log(chalk.blue('Applying additional compatibility fixes...'));
+
+    // Check if the binary exists and apply additional fixes if needed
+    const binaryPath = path.join(
+      process.cwd(),
+      'node_modules',
+      'better-sqlite3',
+      'build',
+      'Release',
+      'better_sqlite3.node',
+    );
+
+    if (fs.existsSync(binaryPath)) {
+      console.log(chalk.green(`Found binary at ${binaryPath}`));
+
+      // Create a backup of the binary
+      const backupPath = `${binaryPath}.backup`;
+      fs.copyFileSync(binaryPath, backupPath);
+      console.log(chalk.green(`Created backup at ${backupPath}`));
+
+      // We could apply additional binary patching here if needed
+      // For now, we'll just rely on the build flags
+    } else {
+      console.log(
+        chalk.yellow(`Binary not found at expected path: ${binaryPath}`),
+      );
+      // Try to find it elsewhere
+      runCommand('find node_modules -name "*.node" | grep better-sqlite3');
+    }
 
     // Run the fix-sqlite3-bug script
     console.log(chalk.blue('Running fix-sqlite3-bug script...'));

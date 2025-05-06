@@ -49,11 +49,28 @@ function fixBetterSqlite3() {
           console.log(chalk.blue('Applying macOS-specific fixes...'));
           sqlite.binary.napi_versions = [6];
         } else if (platform === 'linux') {
-          console.log(chalk.blue('Applying Linux-specific fixes...'));
+          console.log(
+            chalk.blue(
+              'Applying Linux-specific fixes for GLIBC compatibility...',
+            ),
+          );
           sqlite.binary.napi_versions = [6];
-          // Add Linux-specific settings if needed
+          // Add Linux-specific settings for better compatibility
           sqlite.binary.module_name = 'better_sqlite3';
           sqlite.binary.module_path = './build/Release';
+
+          // Add specific settings for older GLIBC compatibility
+          if (!sqlite.binary.linux) {
+            sqlite.binary.linux = {};
+          }
+
+          // Target older GLIBC versions
+          sqlite.binary.linux.runtime = 'glibc';
+          sqlite.binary.linux.abi = 'node_napi';
+
+          console.log(
+            chalk.green('Applied Linux-specific GLIBC compatibility fixes'),
+          );
         } else if (platform === 'win32') {
           console.log(chalk.blue('Applying Windows-specific fixes...'));
           sqlite.binary.napi_versions = [6];
@@ -78,15 +95,55 @@ function fixBetterSqlite3() {
             const bindingContent = fs.readFileSync(bindingGyp, 'utf8');
 
             // Only modify if we're on Linux and it doesn't already have the right settings
-            if (platform === 'linux' && !bindingContent.includes('"-fPIC"')) {
-              console.log(chalk.blue('Modifying binding.gyp for Linux...'));
-              // This is a simple string replacement - in a real scenario you might want to parse the file properly
-              const modifiedBinding = bindingContent.replace(
-                '"cflags": [',
-                '"cflags": [ "-fPIC", ',
+            if (platform === 'linux') {
+              console.log(
+                chalk.blue(
+                  'Modifying binding.gyp for Linux with GLIBC compatibility flags...',
+                ),
               );
+
+              // Add multiple flags for better compatibility with older systems
+              let modifiedBinding = bindingContent;
+
+              // Add -fPIC flag if not already present
+              if (!bindingContent.includes('"-fPIC"')) {
+                modifiedBinding = modifiedBinding.replace(
+                  '"cflags": [',
+                  '"cflags": [ "-fPIC", ',
+                );
+              }
+
+              // Add GLIBC compatibility flags if not already present
+              if (!bindingContent.includes('"-D_LARGEFILE64_SOURCE"')) {
+                modifiedBinding = modifiedBinding.replace(
+                  '"cflags": [',
+                  '"cflags": [ "-D_LARGEFILE64_SOURCE", "-D_FILE_OFFSET_BITS=64", ',
+                );
+              }
+
+              // Add C++ flags for GLIBC compatibility
+              if (!bindingContent.includes('"cxxflags"')) {
+                // Find the closing bracket of the cflags array
+                const cflagsEndPos = modifiedBinding.indexOf(
+                  '],',
+                  modifiedBinding.indexOf('"cflags": ['),
+                );
+                if (cflagsEndPos !== -1) {
+                  modifiedBinding = `${modifiedBinding.slice(
+                    0,
+                    cflagsEndPos + 2,
+                  )}\n      "cxxflags": [ "-D_LARGEFILE64_SOURCE", "-D_FILE_OFFSET_BITS=64", "-fPIC" ],${modifiedBinding.slice(
+                    cflagsEndPos + 2,
+                  )}`;
+                }
+              }
+
               fs.writeFileSync(bindingGyp, modifiedBinding);
-              console.log(chalk.green('Successfully modified binding.gyp'));
+              console.log(
+                chalk.green(
+                  'Successfully modified binding.gyp with GLIBC compatibility flags',
+                ),
+              );
             }
           } catch (bindingError) {
             console.error(

@@ -89,6 +89,13 @@ cd ../..
 
 # Run tests
 echo "=== Running tests ==="
+# Make sure we're using cross-env for NODE_OPTIONS to support all platforms
+if ! grep -q "cross-env NODE_OPTIONS" package.json; then
+  echo "Warning: The test script in package.json should use cross-env for NODE_OPTIONS"
+  echo "Current test script:"
+  grep '"test":' package.json
+  echo "Recommended: \"test\": \"cross-env NODE_OPTIONS=--experimental-vm-modules jest -c jest.config.js\","
+fi
 npm test
 
 # Test packaging for the current platform

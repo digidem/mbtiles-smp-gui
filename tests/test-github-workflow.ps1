@@ -85,6 +85,14 @@ Pop-Location
 
 # Run tests
 Write-Host "`n=== Running tests ===" -ForegroundColor Green
+# Make sure we're using cross-env for NODE_OPTIONS to support all platforms
+$packageJson = Get-Content package.json -Raw
+if ($packageJson -notmatch "cross-env NODE_OPTIONS") {
+    Write-Host "Warning: The test script in package.json should use cross-env for NODE_OPTIONS" -ForegroundColor Yellow
+    Write-Host "Current test script:" -ForegroundColor Yellow
+    Select-String -Path package.json -Pattern '"test":'
+    Write-Host "Recommended: `"test`": `"cross-env NODE_OPTIONS=--experimental-vm-modules jest -c jest.config.js`"," -ForegroundColor Green
+}
 npm test
 
 # Test packaging for Windows

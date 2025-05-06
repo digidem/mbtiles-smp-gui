@@ -15,6 +15,31 @@ npm --version
 Write-Host "`n=== System information ===" -ForegroundColor Green
 systeminfo | findstr /B /C:"OS Name" /C:"OS Version" /C:"System Type"
 
+# Check for Visual Studio Build Tools
+Write-Host "`n=== Checking for Visual Studio Build Tools ===" -ForegroundColor Green
+$vsPath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio"
+if (Test-Path -Path $vsPath) {
+    Write-Host "Visual Studio installation found at: $vsPath" -ForegroundColor Green
+    Get-ChildItem -Path $vsPath -Directory | ForEach-Object { Write-Host "- $_" }
+} else {
+    Write-Host "Visual Studio not found. You may need to install Visual Studio Build Tools." -ForegroundColor Yellow
+    Write-Host "Download from: https://visualstudio.microsoft.com/visual-cpp-build-tools/" -ForegroundColor Yellow
+}
+
+# Install node-gyp globally
+Write-Host "`n=== Installing node-gyp globally ===" -ForegroundColor Green
+npm install -g node-gyp
+
+# Configure node-gyp to use Python
+Write-Host "`n=== Configuring node-gyp to use Python ===" -ForegroundColor Green
+$pythonPath = (Get-Command python).Path
+Write-Host "Python path: $pythonPath" -ForegroundColor Green
+npm config set python $pythonPath
+
+# Configure node-gyp to use Visual Studio Build Tools
+Write-Host "`n=== Configuring node-gyp to use Visual Studio Build Tools ===" -ForegroundColor Green
+npm config set msvs_version 2019
+
 # Install dependencies
 Write-Host "`n=== Installing dependencies ===" -ForegroundColor Green
 npm install --legacy-peer-deps

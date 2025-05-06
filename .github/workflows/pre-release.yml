@@ -23,7 +23,6 @@ jobs:
           cache: 'npm'
 
       - name: Set up Python
-        if: runner.os == 'macOS'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -46,8 +45,17 @@ jobs:
         run: |
           # Print system information for debugging
           systeminfo | findstr /B /C:"OS Name" /C:"OS Version" /C:"System Type"
-          # Install system dependencies if needed
-          npm install -g windows-build-tools
+          # GitHub Actions Windows runners already have Visual Studio Build Tools installed
+          echo "Using pre-installed Visual Studio Build Tools"
+          # Install node-gyp globally
+          npm install -g node-gyp
+          # Configure node-gyp to use the Python we just set up
+          $pythonPath = (Get-Command python).Path
+          echo "Python path: $pythonPath"
+          npm config set python $pythonPath
+
+          # Configure node-gyp to use Visual Studio Build Tools
+          npm config set msvs_version 2019
 
       - name: Install dependencies
         run: |

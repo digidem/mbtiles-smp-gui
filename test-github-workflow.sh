@@ -32,6 +32,16 @@ elif [[ "$PLATFORM" == "windows" ]]; then
   systeminfo | findstr /B /C:"OS Name" /C:"OS Version" /C:"System Type" || echo "Could not get system info"
 fi
 
+# Install node-gyp globally
+echo "=== Installing node-gyp globally ==="
+npm install -g node-gyp
+
+# Configure node-gyp to use Python
+echo "=== Configuring node-gyp to use Python ==="
+PYTHON_PATH=$(python -c "import sys; print(sys.executable)")
+echo "Python path: $PYTHON_PATH"
+npm config set python $PYTHON_PATH
+
 # Install dependencies
 echo "=== Installing dependencies ==="
 npm install --legacy-peer-deps

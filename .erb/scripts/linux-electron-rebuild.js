@@ -93,33 +93,47 @@ async function rebuildNativeModules() {
       );
     }
 
-    // Install better-sqlite3 with build from source and specific flags for older glibc compatibility
+    // Install better-sqlite3 with build from source and specific flags for Ubuntu 22.04 compatibility
     console.log(
       chalk.blue(
-        'Installing better-sqlite3 from source with older glibc compatibility...',
+        'Installing better-sqlite3 from source with Ubuntu 22.04 compatibility...',
       ),
     );
     runCommand(
       'npm install better-sqlite3@11.9.1 --build-from-source --no-save',
     );
 
-    // Set environment variables to ensure compatibility with older glibc
+    // Set environment variables for compatibility
     console.log(
       chalk.blue(
-        'Setting environment variables for older glibc compatibility...',
+        'Setting environment variables for Ubuntu 22.04 compatibility...',
       ),
     );
     process.env.CFLAGS = '-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -fPIC';
     process.env.CXXFLAGS = '-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -fPIC';
 
-    // Create a .npmrc file with specific node-gyp configuration
+    // Create a .npmrc file with specific node-gyp configuration for Ubuntu 22.04
     console.log(
-      chalk.blue('Creating .npmrc with specific node-gyp configuration...'),
+      chalk.blue(
+        'Creating .npmrc with specific node-gyp configuration for Ubuntu 22.04...',
+      ),
     );
     fs.writeFileSync(
       '.npmrc',
       'node-gyp-binary[platform]=linux\nnode-gyp-binary[arch]=x64\n',
     );
+
+    // Install additional dependencies that might be needed on Ubuntu 22.04
+    console.log(
+      chalk.blue('Installing additional dependencies for Ubuntu 22.04...'),
+    );
+    try {
+      runCommand('npm install --no-save node-gyp@latest');
+    } catch (error) {
+      console.warn(
+        chalk.yellow('Failed to install node-gyp, continuing anyway...'),
+      );
+    }
 
     // Run electron-rebuild with verbose output and specific flags for older glibc compatibility
     console.log(

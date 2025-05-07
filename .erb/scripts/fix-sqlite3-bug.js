@@ -51,7 +51,7 @@ function fixBetterSqlite3() {
         } else if (platform === 'linux') {
           console.log(
             chalk.blue(
-              'Applying Linux-specific fixes for GLIBC compatibility...',
+              'Applying Linux-specific fixes for Ubuntu 22.04 compatibility...',
             ),
           );
           sqlite.binary.napi_versions = [6];
@@ -59,17 +59,19 @@ function fixBetterSqlite3() {
           sqlite.binary.module_name = 'better_sqlite3';
           sqlite.binary.module_path = './build/Release';
 
-          // Add specific settings for older GLIBC compatibility
+          // Add specific settings for Ubuntu 22.04 compatibility
           if (!sqlite.binary.linux) {
             sqlite.binary.linux = {};
           }
 
-          // Target older GLIBC versions
+          // Target Ubuntu 22.04 GLIBC version
           sqlite.binary.linux.runtime = 'glibc';
           sqlite.binary.linux.abi = 'node_napi';
 
           console.log(
-            chalk.green('Applied Linux-specific GLIBC compatibility fixes'),
+            chalk.green(
+              'Applied Linux-specific Ubuntu 22.04 compatibility fixes',
+            ),
           );
         } else if (platform === 'win32') {
           console.log(chalk.blue('Applying Windows-specific fixes...'));
@@ -98,7 +100,7 @@ function fixBetterSqlite3() {
             if (platform === 'linux') {
               console.log(
                 chalk.blue(
-                  'Modifying binding.gyp for Linux with GLIBC compatibility flags...',
+                  'Modifying binding.gyp for Linux with Ubuntu 22.04 compatibility flags...',
                 ),
               );
 
@@ -141,7 +143,7 @@ function fixBetterSqlite3() {
               fs.writeFileSync(bindingGyp, modifiedBinding);
               console.log(
                 chalk.green(
-                  'Successfully modified binding.gyp with GLIBC compatibility flags',
+                  'Successfully modified binding.gyp with Ubuntu 22.04 compatibility flags',
                 ),
               );
             }

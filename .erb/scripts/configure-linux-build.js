@@ -30,9 +30,13 @@ const electronBuilderConfig = `
 # This configuration extends the settings in package.json
 # It's specifically for Linux builds to ensure compatibility with older distributions
 
-# Use older glibc version for better compatibility
+# Use specific electron version for better compatibility
 electronDist: node_modules/electron/dist
 electronVersion: 26.6.10
+
+# Set specific environment variables for better compatibility
+npmArgs:
+  - "--no-optional"
 
 # Linux configuration for better compatibility
 linux:

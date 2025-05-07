@@ -94,8 +94,16 @@ const handleUploadFile = async (
     // Convert the file to SMP
     const generator = new SMPGenerator();
 
-    // Create a temporary SMP file
-    const smpFilePath = path.join(outputDir, 'map.smp');
+    // Extract the original filename without extension to use for the SMP file
+    const mbtilesFilename = path.basename(mbtilesPath);
+    const filenameWithoutExt = mbtilesFilename.replace(/\.mbtiles$/i, '');
+    const smpFilename = `${filenameWithoutExt}.smp`;
+
+    console.log(`Original MBTiles filename: ${mbtilesFilename}`);
+    console.log(`Using SMP filename: ${smpFilename}`);
+
+    // Create a temporary SMP file using the original filename
+    const smpFilePath = path.join(outputDir, smpFilename);
 
     // Before creating the SMP file, ensure the directory exists
     fsExtra.ensureDirSync(path.dirname(smpFilePath));

@@ -34,8 +34,49 @@ export async function convertMBTilesToSMP(
   let db: Database.Database | null = null;
 
   try {
-    // Open the MBTiles file
-    db = new Database(mbtilesPath, { readonly: true });
+    // Check if the file exists before trying to open it
+    if (!fs.existsSync(mbtilesPath)) {
+      throw new Error(`MBTiles file not found: ${mbtilesPath}`);
+    }
+
+    // Check if the file is accessible
+    try {
+      fs.accessSync(mbtilesPath, fs.constants.R_OK);
+    } catch (accessError) {
+      throw new Error(
+        `MBTiles file is not readable: ${mbtilesPath}. ${accessError.message}`,
+      );
+    }
+
+    // Check file size to make sure it's not empty
+    const stats = fs.statSync(mbtilesPath);
+    if (stats.size === 0) {
+      throw new Error(`MBTiles file is empty: ${mbtilesPath}`);
+    }
+
+    console.log(`MBTiles file exists and is readable: ${mbtilesPath}`);
+    console.log(`File size: ${stats.size} bytes`);
+
+    try {
+      // Open the MBTiles file with better error handling
+      db = new Database(mbtilesPath, {
+        readonly: true,
+        fileMustExist: true,
+        verbose: console.log, // Add verbose logging for debugging
+      });
+    } catch (dbError) {
+      console.error('Error opening MBTiles database:', dbError);
+
+      // Check if it's a permission issue
+      if (dbError.message.includes('unable to open database file')) {
+        throw new Error(
+          `Unable to open MBTiles file. This may be due to file permissions or the file is not a valid MBTiles database. Original error: ${dbError.message}`,
+        );
+      }
+
+      // Re-throw the original error
+      throw dbError;
+    }
 
     // Get metadata from the MBTiles file
     // eslint-disable-next-line no-use-before-define

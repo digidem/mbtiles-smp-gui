@@ -34,20 +34,19 @@ const electronBuilderConfig = `
 electronDist: node_modules/electron/dist
 electronVersion: 26.6.10
 
-# AppImage configuration for better compatibility
+# Linux configuration for better compatibility
 linux:
   # Force use of older glibc for better compatibility
   executableArgs:
     - "--no-sandbox"
-  appImage:
-    # Use older AppImage format for better compatibility
-    systemIntegration: "doNotAsk"
-    # Ensure compatibility with older systems
-    artifactName: "\${productName}-\${version}-\${arch}.AppImage"
-    # Use older glibc for better compatibility
-    fpm:
-      - "--rpm-rpmbuild-define=_build_id_links none"
-    
+  # Ensure compatibility with older systems
+  artifactName: "\${productName}-\${version}-\${arch}.AppImage"
+  # Target older systems
+  target:
+    - target: AppImage
+      arch:
+        - x64
+
 # Ensure we use a compatible build environment
 buildDependenciesFromSource: true
 nodeGypRebuild: true

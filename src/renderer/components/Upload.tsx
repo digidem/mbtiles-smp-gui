@@ -42,12 +42,30 @@ function SingleFileUploadForm() {
       if (acceptedFiles.length) {
         const file = acceptedFiles[0];
         /** File validation */
-        if (window.innerWidth > 768) {
-          if (!file.name.endsWith('.mbtiles')) {
-            alert('Please select a valid .mbtiles file');
-            return;
-          }
+        if (!file.name.endsWith('.mbtiles')) {
+          setFailed(
+            'Please select a valid .mbtiles file with .mbtiles extension',
+          );
+          return;
         }
+
+        // Check file size (max 500MB)
+        const MAX_SIZE = 500 * 1024 * 1024; // 500MB in bytes
+        if (file.size > MAX_SIZE) {
+          setFailed(
+            `File is too large. Maximum size is 500MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB`,
+          );
+          return;
+        }
+
+        // Check if file is empty
+        if (file.size === 0) {
+          setFailed('File is empty. Please select a valid MBTiles file.');
+          return;
+        }
+
+        // Reset any previous errors
+        setFailed(null);
 
         // Debug information about the file
         console.log('Drag and drop file details:', {
@@ -198,22 +216,51 @@ function SingleFileUploadForm() {
         )}
         {failed && (
           <div className="my-4 text-center">
-            <span className="bg-red-500 text-white rounded-full px-4 py-2 uppercase">
-              <b>Error:</b>{' '}
-              {(() => {
-                if (
-                  typeof failed === 'object' &&
-                  failed !== null &&
-                  'message' in failed
-                ) {
-                  return failed.message;
-                }
-                if (typeof failed === 'string') {
-                  return failed;
-                }
-                return 'Error';
-              })()}
-            </span>
+            <div className="bg-red-500 text-white rounded-lg px-6 py-4 max-w-lg mx-auto shadow-lg">
+              <div className="flex items-center mb-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                <span className="font-bold text-lg">Error</span>
+              </div>
+              <p className="text-left">
+                {(() => {
+                  if (
+                    typeof failed === 'object' &&
+                    failed !== null &&
+                    'message' in failed
+                  ) {
+                    return failed.message;
+                  }
+                  if (typeof failed === 'string') {
+                    return failed;
+                  }
+                  return 'An unknown error occurred. Please try again.';
+                })()}
+              </p>
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFailed(null);
+                  }}
+                  className="bg-white text-red-500 font-bold py-2 px-4 rounded-full shadow-lg hover:bg-gray-100 transition duration-300 ease-in-out"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
           </div>
         )}
         {processing && (

@@ -247,10 +247,6 @@
         "Name": "MBTiles-to-SMP",
         "Comment": "Convert MBTiles to SMP maps",
         "Categories": "Development;Utility;"
-      },
-      "appImage": {
-        "systemIntegration": "doNotAsk",
-        "license": "LICENSE"
       }
     },
     "directories": {

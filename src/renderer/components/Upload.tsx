@@ -348,7 +348,12 @@ function SingleFileUploadForm() {
         )}
       <div className="mt-12 text-center text-white">
         Made with <span className="text-red">❤️</span> by{' '}
-        <a href="https://awana.digital" className="text-white hover:underline">
+        <a
+          target="_blank"
+          href="https://awana.digital"
+          className="text-white hover:underline"
+          rel="noreferrer"
+        >
           Awana Digital
         </a>
       </div>

@@ -33,7 +33,7 @@
     "package": "npm run clean && npm run build && npm run fix:sqlite && npx electron-builder build --publish never && npm run build:dll",
     "package:mac": "npm run clean && npm run build && npm run fix:sqlite && npx electron-builder build --mac --publish never && npm run build:dll",
     "package:win": "npm run clean && npm run build && npm run fix:sqlite && npx electron-builder build --win --publish never && npm run build:dll",
-    "package:linux": "npm run clean && npm run build && npm run fix:sqlite && node ./.erb/scripts/configure-linux-build.js && node ./.erb/scripts/linux-electron-rebuild.js && npx electron-builder build --linux --config electron-builder.yml --publish never && npm run build:dll",
+    "package:linux": "npm run clean && npm run build && npm run fix:sqlite && node ./.erb/scripts/linux-electron-rebuild.js && npx electron-builder build --linux --publish never && npm run build:dll",
     "fix:sqlite": "node ./.erb/scripts/fix-sqlite3-bug.js",
     "rebuild": "npx electron-rebuild --parallel --types prod,dev,optional --module-dir release/app",
     "start": "npx ts-node ./.erb/scripts/check-port-in-use.js && npm run start:renderer",

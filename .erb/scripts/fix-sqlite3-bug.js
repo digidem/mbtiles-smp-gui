@@ -59,14 +59,23 @@ function fixBetterSqlite3() {
           sqlite.binary.module_name = 'better_sqlite3';
           sqlite.binary.module_path = './build/Release';
 
-          // Add specific settings for Ubuntu 22.04 compatibility
-          if (!sqlite.binary.linux) {
-            sqlite.binary.linux = {};
+          // Make sure binary field is properly formatted for electron-rebuild
+          // The error "value.replace is not a function" happens when binary field has non-string values
+
+          // Ensure binary field is properly formatted
+          if (typeof sqlite.binary !== 'object') {
+            sqlite.binary = {};
           }
 
-          // Target Ubuntu 22.04 GLIBC version
-          sqlite.binary.linux.runtime = 'glibc';
-          sqlite.binary.linux.abi = 'node_napi';
+          // Set napi_versions as an array of numbers (not strings)
+          sqlite.binary.napi_versions = [6];
+
+          // Make sure module_name and module_path are strings
+          sqlite.binary.module_name = 'better_sqlite3';
+          sqlite.binary.module_path = './build/Release';
+
+          // Remove any linux-specific settings that might cause issues
+          delete sqlite.binary.linux;
 
           console.log(
             chalk.green(

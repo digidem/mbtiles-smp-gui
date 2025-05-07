@@ -135,12 +135,99 @@ async function rebuildNativeModules() {
       );
     }
 
-    // Run electron-rebuild with verbose output and specific flags for older glibc compatibility
+    // Use node-gyp directly instead of electron-rebuild to avoid the "value.replace is not a function" error
     console.log(
-      chalk.blue('Running electron-rebuild with compatibility flags...'),
+      chalk.blue('Building better-sqlite3 with node-gyp directly...'),
     );
-    runCommand(
-      `npx electron-rebuild -f -w better-sqlite3 -v ${electronVersion} --arch=x64 --verbose --dist-url=https://electronjs.org/headers`,
+
+    // Change to the better-sqlite3 directory
+    const betterSqlite3Path = path.join(
+      process.cwd(),
+      'node_modules',
+      'better-sqlite3',
+    );
+    process.chdir(betterSqlite3Path);
+    console.log(chalk.blue(`Changed directory to: ${betterSqlite3Path}`));
+
+    // Set environment variables for the build
+    process.env.npm_config_target = electronVersion;
+    process.env.npm_config_arch = 'x64';
+    process.env.npm_config_target_arch = 'x64';
+    process.env.npm_config_disturl = 'https://electronjs.org/headers';
+    process.env.npm_config_runtime = 'electron';
+    process.env.npm_config_build_from_source = 'true';
+
+    // Run node-gyp directly
+    try {
+      runCommand('npx node-gyp rebuild');
+      console.log(
+        chalk.green('Successfully built better-sqlite3 with node-gyp'),
+      );
+    } catch (error) {
+      console.error(
+        chalk.red(
+          'Failed to build with node-gyp, trying alternative method...',
+        ),
+      );
+
+      // Try an alternative approach with prebuild-install
+      try {
+        runCommand(
+          `npx prebuild-install --runtime=electron --target=${electronVersion} --arch=x64 || npx node-gyp rebuild`,
+        );
+        console.log(
+          chalk.green(
+            'Successfully built better-sqlite3 with alternative method',
+          ),
+        );
+      } catch (prebuildError) {
+        console.error(
+          chalk.red(
+            'Failed to build with alternative method, trying one more approach...',
+          ),
+        );
+
+        // Try one more approach - copy prebuilt binary
+        try {
+          // Find any prebuilt binaries
+          const prebuiltBinaries = runCommand(
+            'find ~/.electron-gyp -name "better_sqlite3.node" | grep -v obj.target',
+          );
+
+          if (prebuiltBinaries.trim()) {
+            const firstBinary = prebuiltBinaries.trim().split('\n')[0];
+            const targetDir = path.join(betterSqlite3Path, 'build', 'Release');
+
+            // Create the directory if it doesn't exist
+            if (!fs.existsSync(targetDir)) {
+              fs.mkdirSync(targetDir, { recursive: true });
+            }
+
+            // Copy the binary
+            fs.copyFileSync(
+              firstBinary,
+              path.join(targetDir, 'better_sqlite3.node'),
+            );
+            console.log(
+              chalk.green(`Copied prebuilt binary from ${firstBinary}`),
+            );
+          } else {
+            throw new Error('No prebuilt binaries found');
+          }
+        } catch (copyError) {
+          console.error(chalk.red('All build methods failed'));
+          throw new Error(
+            `Failed to build better-sqlite3: ${copyError.message}`,
+          );
+        }
+      }
+    }
+
+    // Change back to the original directory
+    const originalDir = path.resolve(process.cwd(), '../..');
+    process.chdir(originalDir);
+    console.log(
+      chalk.blue(`Changed back to original directory: ${originalDir}`),
     );
 
     // Apply additional compatibility fixes

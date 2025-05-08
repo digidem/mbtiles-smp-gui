@@ -46,6 +46,15 @@ const electronHandler = {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
     },
   },
+  // Add SMP viewer IPC handlers
+  smpViewer: {
+    startServer: (smpFilePath: string) =>
+      ipcRenderer.invoke('start-smp-server', smpFilePath),
+    stopServer: (smpFilePath: string) =>
+      ipcRenderer.invoke('stop-smp-server', smpFilePath),
+    openInBrowser: (smpFilePath: string) =>
+      ipcRenderer.invoke('open-smp-in-browser', smpFilePath),
+  },
 };
 
 contextBridge.exposeInMainWorld('electron', electronHandler);

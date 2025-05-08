@@ -16,6 +16,8 @@ import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import './upload';
 import './installMapeoMap';
+import './smpViewer';
+import { /* startSMPServer, */ stopAllSMPServers } from './smpServer';
 
 class AppUpdater {
   constructor() {
@@ -127,6 +129,11 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+// Stop all SMP servers when the app is about to quit
+app.on('before-quit', async () => {
+  await stopAllSMPServers();
 });
 
 app

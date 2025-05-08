@@ -23,7 +23,7 @@ const configuration: webpack.Configuration = {
 
   target: 'electron-renderer',
 
-  externals: ['fsevents', 'crypto-browserify'],
+  externals: ['fsevents', 'crypto-browserify', '@node-rs/crc32-wasm32-wasi'],
 
   /**
    * Use `module` from `webpack.config.renderer.dev.js`
@@ -31,7 +31,10 @@ const configuration: webpack.Configuration = {
   module: require('./webpack.config.renderer.dev').default.module,
 
   entry: {
-    renderer: Object.keys(dependencies || {}),
+    renderer: Object.keys(dependencies || {}).filter(
+      (dependency) =>
+        dependency !== 'yauzl-promise' && dependency !== '@node-rs/crc32',
+    ),
   },
 
   output: {

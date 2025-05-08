@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
+import SMPViewer from './SMPViewer';
 
 function SingleFileUploadForm() {
   const [uploading, setUploading] = useState<boolean>(false);
@@ -135,7 +136,7 @@ function SingleFileUploadForm() {
     <div>
       <div className="mt-4 text-center pb-4">
         <h1 className="text-2xl font-bold text-center">
-          mbtiles to CoMapeo SMP conversion
+          MBTiles to CoMapeo SMP conversion
         </h1>
         <span className="hidden bg-gray-500 text-white rounded-full px-4 py-2 uppercase">
           <b>Current State:</b>{' '}
@@ -155,7 +156,14 @@ function SingleFileUploadForm() {
       </div>
       <div>
         {results && typeof results === 'object' && 'downloadUrl' in results && (
-          <div className="mt-4 flex flex-col items-center space-y-8">
+          <div className="mt-4 flex flex-col items-center space-y-4">
+            {/* Map Preview */}
+            {results && results.downloadUrl && (
+              <SMPViewer
+                smpFilePath={results.downloadUrl.replace('file://', '')}
+              />
+            )}
+
             <div className="flex flex-wrap justify-center gap-4">
               <button
                 type="button"
@@ -185,41 +193,44 @@ function SingleFileUploadForm() {
                 </svg>
                 Download SMP Map
               </button>
-              <a
-                href="https://smp-viewer.pages.dev/"
-                target="_blank"
-                rel="noreferrer"
+
+              <button
+                type="button"
+                onClick={() => {
+                  // Open the SMP file in the browser
+                  if (results && results.downloadUrl) {
+                    window.electron.smpViewer.openInBrowser(
+                      results.downloadUrl.replace('file://', ''),
+                    );
+                  }
+                }}
+                className="bg-green-500 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-green-700 transition duration-300 ease-in-out transform hover:scale-105 flex items-center"
               >
-                <button
-                  type="button"
-                  className="bg-green-500 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-green-700 transition duration-300 ease-in-out transform hover:scale-105 flex items-center"
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-2"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                  </svg>
-                  View in SMP Viewer
-                </button>
-              </a>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+                View in the browser
+              </button>
             </div>
 
-            <div className="mt-4 py-8 px-4 bg-blue-200 rounded-xl shadow-inner max-w-md">
+            <div className="py-8 px-4 bg-blue-200 rounded-xl shadow-inner max-w-md">
               <p className="text-gray-700 text-center mb-4">
                 Your map has been successfully converted! You can download it
                 now or view it in the SMP Viewer.
@@ -396,5 +407,4 @@ function SingleFileUploadForm() {
     </div>
   );
 }
-
 export default SingleFileUploadForm;

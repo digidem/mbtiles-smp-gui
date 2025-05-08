@@ -94,9 +94,15 @@ export default class MenuBuilder {
             ]
           : [
               {
-                label: 'SMP Viewer',
+                label: 'Online SMP Viewer',
                 click() {
                   shell.openExternal('https://smp-viewer.pages.dev');
+                },
+              },
+              {
+                label: 'Online MBTiles Viewer',
+                click() {
+                  shell.openExternal('https://mbtiles-viewer.pages.dev');
                 },
               },
             ],
@@ -160,17 +166,29 @@ export default class MenuBuilder {
                   },
                 },
                 {
-                  label: 'SMP Viewer',
+                  label: 'Online SMP Viewer',
                   click() {
                     shell.openExternal('https://smp-viewer.pages.dev');
+                  },
+                },
+                {
+                  label: 'Online MBTiles Viewer',
+                  click() {
+                    shell.openExternal('https://mbtiles-viewer.pages.dev');
                   },
                 },
               ]
             : [
                 {
-                  label: 'SMP Viewer',
+                  label: 'Online SMP Viewer',
                   click() {
                     shell.openExternal('https://smp-viewer.pages.dev');
+                  },
+                },
+                {
+                  label: 'Online MBTiles Viewer',
+                  click() {
+                    shell.openExternal('https://mbtiles-viewer.pages.dev');
                   },
                 },
               ],

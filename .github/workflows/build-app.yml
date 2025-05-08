@@ -38,6 +38,9 @@ jobs:
           echo "Node version: $(node -v)"
           echo "NPM version: $(npm -v)"
 
+          # Install dmg-license package (required for macOS DMG creation)
+          npm install --save-dev dmg-license
+
           # Ensure node_modules/.bin is in PATH
           export PATH="$PATH:$(pwd)/node_modules/.bin"
           echo "PATH: $PATH"
